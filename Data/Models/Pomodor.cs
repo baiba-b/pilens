@@ -1,19 +1,25 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Pilens.Data.Models
 {
     public class Pomodoro
     {
         [Key]
-        public int Id { get; set; }
+        [ForeignKey(nameof(User))]
+        public string UserID { get; set; } = string.Empty;
+
         public int DurationInMinutes { get; set; }
+
+        public virtual ApplicationUser User { get; set; } = null!;
 
         public Pomodoro() { }
 
-        public Pomodoro(int id, int durationInMinutes)
+        public Pomodoro(ApplicationUser user, int durationInMinutes)
         {
-            Id = id;
-            DurationInMinutes = durationInMinutes;
+            this.User = user;
+            this.UserID = user.Id;
+            this.DurationInMinutes = durationInMinutes;
         }
     }
 }
