@@ -6,7 +6,10 @@ namespace Pilens.Components.Pages
     public partial class Pomodoro
     {
         private static System.Timers.Timer aTimer;
-        private int InputMinutes { get; set; } = 0;
+        private int InputMinutes { get; set; } = 25;
+        private int InputPauseMinutes { get; set; } = 5;
+        private int InputLongPauseMinutes { get; set; } = 20; //vajadzēs iespēju skippot pauzi + 4 sesijai noņemt īso pauzi
+        private int InputSessionAmount { get; set; } = 4; //  (viena sesija = 1 pomodoro + pauze)
         private int RemainingSeconds { get; set; } = 0;
         private string DisplayStatus { get; set; } = "Stop";
         private string ErrorMessage { get; set; }
@@ -68,7 +71,7 @@ namespace Pilens.Components.Pages
             aTimer.Stop();
             aTimer.Dispose();
             aTimer = null;
-            InputMinutes = 0;
+            InputMinutes = 25;
             RemainingSeconds = 0;
             StartBtnPressed = false;
             StopBtnPressed = false;

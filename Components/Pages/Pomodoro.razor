@@ -3,12 +3,30 @@
 
 <div class="container border w-50 p-2 size">
     <div>
-        <p>Ievadi minūtes:</p>
+        <label>Sesijas ilgums:</label>
         <input type="number" class="form-control mb-2"  @bind ="InputMinutes" />
+        @if (!StartBtnPressed)
+        {
+            <div class="d-flex gap-2">
+                <div class="flex-fill">
+                    <label>īsā pauze:</label>
+                    <input type="number"class="form-control"  @bind="InputPauseMinutes" />
+                </div>
+               <div class="flex-fill">
+                    <label>Garās pauze:</label>
+                    <input type="number" class="form-control"   @bind="InputLongPauseMinutes" />
+               </div>
+               <div class="flex-fill">
+                    <label>Sesijas:</label>
+                    <input type="number" class="form-control"  @bind="InputSessionAmount" />
+               </div
+              
+            </div>
+        }
         <p class="text-danger">@ErrorMessage</p>
         <p>Atlikušais laiks: @DisplayTime</p>
         <div class="d-flex justify-content-center">
-            @if (!StartBtnPressed)
+            @if (!StartBtnPressed) 
             {
                 <button class="btn btn-primary me-2" @onclick="SetTimer">Sākt</button>
             }
