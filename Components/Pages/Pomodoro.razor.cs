@@ -11,21 +11,22 @@ namespace Pilens.Components.Pages
         private int InputPauseMinutes { get; set; } = 5;
         private int InputLongPauseMinutes { get; set; } = 20; //vajadzēs iespēju skippot pauzi + 4 sesijai noņemt īso pauzi
         private int InputSessionAmount { get; set; } = 4; //  (viena sesija = 1 pomodoro + pauze)
-
         private int InputSessionLongPause { get; set; } = 4;
         private int RemainingSeconds { get; set; } = 0;
         private string DisplayStatus { get; set; } = "Stop";
         private string ErrorMessage { get; set; }
         private bool StartBtnPressed { get; set; } = false;
         private bool StopBtnPressed  { get; set; } = false;
-
         private bool IsPause { get; set; } = false;
         private int CurrSession { get; set; } = 0;
+        private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
 
-        private void SetTimer() //koda implementācijas piemērs ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
+        // Funkcija, kas izveido  un sāk taimeri
+        private void SetTimer() //System.Timer funkciju implementācijas piemērs & apraksts ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
+            if (aTimer != null) return;
             RemainingSeconds = InputMinutes * 60;
             ErrorMessage = string.Empty;
             if (RemainingSeconds <= 0)
@@ -42,6 +43,8 @@ namespace Pilens.Components.Pages
             aTimer.Enabled = true;
             StartBtnPressed = true;
         }
+
+        // Funkcija, kas sāk pauzes taimeri
         private void SetPause(int min) //koda implementācijas piemērs ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
             RemainingSeconds = min * 60;
@@ -50,22 +53,51 @@ namespace Pilens.Components.Pages
             pTimer.Elapsed += UpdatePauseTimer;
             pTimer.AutoReset = true;
             pTimer.Enabled = true;
-            StartBtnPressed = true;
         }
-        private void UpdatePauseTimer(Object source, ElapsedEventArgs e)
+
+        // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši darba taimerim
+        private void UpdateTimer(object source, ElapsedEventArgs e)
         {
-            if (RemainingSeconds > 0)
+            lock (_timerLock)
             {
-                RemainingSeconds--;
-                InvokeAsync(StateHasChanged);
+                if (RemainingSeconds > 0)
+                {
+                    RemainingSeconds--;
+                    InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    aTimer.Stop();
+                    aTimer.Dispose();
+                    aTimer = null;
+                    CurrSession++;
+                    IsPause = true;
+                    //ahve to make it so after EVERY input sessions lon pause is set
+                    if (CurrSession < InputSessionAmount && CurrSession % InputSessionLongPause != 0) SetPause(InputPauseMinutes);
+                    else SetPause(InputLongPauseMinutes);
+
+                }
             }
-            else
+        }
+        // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši pauzes taimerim
+        private void UpdatePauseTimer(object source, ElapsedEventArgs e)
+        {
+            lock (_timerLock)
             {
-                IsPause = false;
-                SetTimer();
+                if (RemainingSeconds > 0)
+                {
+                    RemainingSeconds--;
+                    InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    IsPause = false;
+                    SetTimer();
+                }
             }
         }
 
+        //Funkcija, kas aptur taimeri
         private void StopTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
                 
@@ -74,23 +106,8 @@ namespace Pilens.Components.Pages
             DisplayStatus = "Continue";
             StopBtnPressed = true;
         }
-        private void UpdateTimer(Object source, ElapsedEventArgs e)
-        {
-            if (RemainingSeconds > 0)
-            {
-                RemainingSeconds--;
-                InvokeAsync(StateHasChanged);
-            }
-            else
-            {
-                CurrSession++;
-                IsPause = true;
-                if (CurrSession < InputSessionAmount && CurrSession < 4) SetPause(InputPauseMinutes);
-                else SetPause(InputLongPauseMinutes);
-                aTimer.Stop();
-                aTimer.Dispose();
-            }
-        }
+      
+        // Funkcija, kas atiestata taimeri uz sākotnējo stāvokli
         private void ResetTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
             if (!IsPause)
@@ -115,6 +132,7 @@ namespace Pilens.Components.Pages
             CurrSession = 0;
             InvokeAsync(StateHasChanged);
         }
+        // Funkcija, kas turpina taimeri pēc apturēšanas
         private void ContinueTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
             if (!IsPause) aTimer.Start();
