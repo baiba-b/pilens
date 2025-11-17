@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Timers;
 
 namespace Pilens.Components.Pages
 {
     public partial class Pomodoro
     {
-        private static System.Timers.Timer aTimer;
-        private static System.Timers.Timer pTimer;
+        private static System.Timers.Timer? aTimer;
+        private static System.Timers.Timer? pTimer;
         private int InputMinutes { get; set; } = 25;
         private int InputPauseMinutes { get; set; } = 5;
         private int InputLongPauseMinutes { get; set; } = 20; //vajadzēs iespēju skippot pauzi + 4 sesijai noņemt īso pauzi
@@ -14,10 +15,15 @@ namespace Pilens.Components.Pages
         private int InputSessionLongPause { get; set; } = 4;
         private int RemainingSeconds { get; set; } = 0;
         private string DisplayStatus { get; set; } = "Stop";
-        private string ErrorMessage { get; set; }
+        private string? ErrorMessage { get; set; }
         private bool StartBtnPressed { get; set; } = false;
         private bool StopBtnPressed  { get; set; } = false;
         private bool IsPause { get; set; } = false;
+        private int AdjustedMin { get; set; } = 5;
+
+        private bool isDone { get; set; } = false;
+
+
         private int CurrSession { get; set; } = 0;
         private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
         private string DisplayTime =>
@@ -72,9 +78,19 @@ namespace Pilens.Components.Pages
                     aTimer = null;
                     CurrSession++;
                     IsPause = true;
-                    //ahve to make it so after EVERY input sessions lon pause is set
+               
                     if (CurrSession < InputSessionAmount && CurrSession % InputSessionLongPause != 0) SetPause(InputPauseMinutes);
-                    else SetPause(InputLongPauseMinutes);
+                    else if (CurrSession <= InputSessionAmount) SetPause(InputLongPauseMinutes);
+                    else
+                    {                         //Restartē visu pēc visu sesiju pabeigšanas
+                        InputMinutes = 25;
+                        RemainingSeconds = 0;
+                        StartBtnPressed = false;
+                        StopBtnPressed = false;
+                        CurrSession = 0;
+                        IsPause = false;
+                        StartBtnPressed = false;
+                    }
 
                 }
             }
@@ -98,12 +114,11 @@ namespace Pilens.Components.Pages
         }
 
         //Funkcija, kas aptur taimeri
-        private void StopTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        private void PauseTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
                 
            if(!IsPause) aTimer.Stop();
            else pTimer.Stop();
-            DisplayStatus = "Continue";
             StopBtnPressed = true;
         }
       
@@ -139,6 +154,31 @@ namespace Pilens.Components.Pages
             else pTimer.Start();
             StopBtnPressed = false;
             InvokeAsync(StateHasChanged);
+        }
+        private void SkipPause(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        {
+            pTimer.Stop();
+            pTimer.Dispose();
+            pTimer = null;
+            IsPause = false;
+            SetTimer();
+
+        }
+        // Funkcija, kas pielāgo taimeri pēc lietotāja ievades
+        private void AdjustTime(bool adjustType)
+        {
+            if (adjustType == true)
+            {
+                RemainingSeconds += AdjustedMin*60;
+            }
+            else
+            {
+                if (RemainingSeconds > AdjustedMin * 60) RemainingSeconds -= AdjustedMin * 60;
+                else RemainingSeconds = 0;
+            }
+                
+            
+        
         }
     }
 }

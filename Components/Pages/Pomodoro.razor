@@ -1,7 +1,7 @@
 ﻿@page "/Pomodoro"
 <h3 class="text-center">Pomodoro</h3>
 
-<div class="container border w-50 p-2 size">
+<div class="container border p-2">
     @if (!StartBtnPressed)
     {
         <p class="text-danger">@ErrorMessage</p>
@@ -9,7 +9,7 @@
         <label>Sesijas ilgums:</label>
         <input type="number" class="form-control mb-2"  @bind ="InputMinutes" />
        
-            <div class="d-flex align-items-baseline gap-2">
+            <div class="d-flex align-items-baseline  gap-2">
                 <div class="flex-fill">
                     <label>īsā pauze:</label>
                     <input type="number"class="form-control"  @bind="InputPauseMinutes" />
@@ -21,43 +21,55 @@
                 <div class="flex-fill">
                     <label>Sesijas:</label>
                     <input type="number" class="form-control"  @bind="InputSessionAmount" />
-                </div
+                </div>
                     
-            </div
+            </div>
             <label >Garās pauzes intervāls 
                 <i data-toggle="tooltip" title="Sesija pēc kuras būs garā pauze" class="bi bi-info-circle info-hover"></i>
 
             </label>
             <input type="number" class="form-control mb-2"  @bind="InputSessionLongPause" />
     }
-    else
-        {
-        @if(IsPause)
-        {
-            <p>Pauzes laiks (～￣▽￣)～</p>
-        }   
-            <p>Sesija @CurrSession/@InputSessionAmount</p>
-            <p>Atlikušais laiks: @DisplayTime</p>
-        }
+    else 
+         {
+            @if(IsPause)
+            {
+                <p>Pauzes laiks (～￣▽￣)～</p>
+            }   
+                <p>Sesija @CurrSession/@InputSessionAmount</p>
+                <p>Atlikušais laiks: @DisplayTime</p>
+         }
 
-        <div class="d-flex justify-content-center">
+
+    <div class="d-flex justify-content-center gap-1 mx-auto flex-nowrap ">
             @if (!StartBtnPressed) 
             {
-                <button class="btn btn-primary me-2" @onclick="SetTimer">Sākt</button>
-            }
+            <button class="btn btn-primary" @onclick="SetTimer">Sākt</button>
+             }
             else
             {
-                <button class="btn btn-secondary me-2" @onclick="ResetTimer">Pārtraukt</button>
-                 @if (!StopBtnPressed)
-                {
-                    <button class="btn me-2 btn-danger" @onclick="StopTimer"><i class="bi bi-pause-fill"></i></button>
+                @if (IsPause)
+                    {
+                <i @onclick="SkipPause" class="bi bi-skip-end-circle-fill icon-btn"></i>
 
-                }
+                    }
+                <button class="btn btn-secondary" @onclick="ResetTimer">Pārtraukt</button>
+                @if (!StopBtnPressed)
+                    {
+                <button class="btn btn-danger" @onclick="PauseTimer"><i class="bi bi-pause-fill"></i></button>
+
+                    }
                 else
-                {
-                <button class="btn btn-success me-2" @onclick="ContinueTimer"><i class="bi bi-play-fill"></i></button>
-                }
-            }
+                    {
+                <button class="btn btn-success " @onclick="ContinueTimer"><i class="bi bi-play-fill"></i></button>
+                    }
+                <div class="d-flex flex-nowrap align-items-center gap-2">
+                <i @onclick="() => AdjustTime(false)" class="bi bi-dash-circle-fill icon-btn"></i>
+                <input type="number" class="form-control form-control-sm w-25" @bind="AdjustedMin" />
+                <i @onclick="() => AdjustTime(true)" class="bi bi-plus-circle-fill icon-btn"></i>
+
+                </div>
+             }
 
           
         </div>
