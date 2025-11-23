@@ -15,13 +15,3 @@ input[type=number] {
     -moz-appearance: textfield;
 }
 
-.icon-btn {
-    font-size: 1.5rem; 
-    cursor: pointer; 
-    color: #495057; 
-    transition: color 0.2s;
-}
-
-    .icon-btn:hover {
-        color: #0d6efd; 
-    }

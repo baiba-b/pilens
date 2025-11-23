@@ -1,0 +1,51 @@
+﻿@page "/ToDo"
+@rendermode InteractiveServer
+<h3>ToDo</h3>
+<div class="container border p-2">
+    @foreach (var item in Items)
+    {
+        <div class="d-flex align-items-center gap-2 py-1">
+            <input class="form-check-input mt-1" type="checkbox" @bind="item.IsCompleted" />
+
+            <div class="flex-grow-1 px-2 py-1">
+                <input class="form-control" @bind="item.Title" />
+            </div>
+        </div>
+    }
+
+    <div class="align-items-center gap-2 p-1 border">
+        <input type="text" class="form-control mb-2" @bind="newTaskTitle" @onclick="ToggleExpanded" placeholder="Pievieno uzdevuma nosaukumu" />
+
+        @if (expanded)
+        {
+            <input type="text" class="form-control mb-2" @bind="newTaskDescription" placeholder="Apraksts" />
+
+            <div class="flex-fill text-center align-content-center" id="formFields">
+                <label class="form-label mt-2">Datums un laiks</label>
+                <input type="datetime-local" class="form-control mb-2 text-center" @bind="newTaskDeadline" />
+
+                <label for="effortLevel" class="form-label mt-1">Grūtības pakāpe</label>
+                <input type="range" @bind="newTaskEffort" class="form-range" min="1" max="3" step="1" id="effortLevel" />
+
+                <div class="mt-1">
+                    @switch (newTaskEffort)
+                    {
+                        case 1:
+                            <p class="text-success">Viegla</p>
+                            break;
+                        case 2:
+                            <p class="text-warning">Vidēja</p>
+                            break;
+                        case 3:
+                            <p class="text-danger">Smaga</p>
+                            break;
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="d-grid justify-content-center">
+            <i @onclick="AddOrUpdateTask" class="bi bi-plus-circle-fill icon-btn"></i>
+        </div>
+    </div>
+</div>
