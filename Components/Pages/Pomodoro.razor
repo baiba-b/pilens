@@ -1,76 +1,65 @@
 ﻿@page "/Pomodoro"
-<h3 class="text-center">Pomodoro</h3>
+<MudPaper Class="mt-2 pa-2 d-inline-block">
+     <MudContainer MaxWidth="MaxWidth.Small">
+        <MudText Typo="Typo.h5" Align="Align.Center">Pomodoro</MudText>
 
-<div class="container border p-2">
-    @if (!StartBtnPressed)
-    {
-        <p class="text-danger">@ErrorMessage</p>
+        @if (!StartBtnPressed)
+        {
+            <MudText Color="Color.Error">@ErrorMessage</MudText>
 
-        <label>Sesijas ilgums:</label>
-        <input type="number" class="form-control mb-2"  @bind ="InputMinutes" />
-       
-            <div class="d-flex align-items-baseline  gap-2">
-                <div class="flex-fill">
-                    <label>īsā pauze:</label>
-                    <input type="number"class="form-control"  @bind="InputPauseMinutes" />
-                </div>
-                <div class="flex-fill">
-                    <label>Garās pauze:</label>
-                    <input type="number" class="form-control"   @bind="InputLongPauseMinutes" />
-                </div>
-                <div class="flex-fill">
-                    <label>Sesijas:</label>
-                    <input type="number" class="form-control"  @bind="InputSessionAmount" />
-                </div>
-                    
-            </div>
-            <label >Garās pauzes intervāls 
-                <i data-toggle="tooltip" title="Sesija pēc kuras būs garā pauze" class="bi bi-info-circle info-hover"></i>
+            <MudNumericField @bind-Value="InputMinutes" Label="Sesijas ilgums" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            
+            <MudStack Row="true" Spacing="2">
+                <MudNumericField @bind-Value="InputPauseMinutes" Label="Īsā pauze" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudNumericField @bind-Value="InputLongPauseMinutes" Label="Garā pauze" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudNumericField @bind-Value="InputSessionAmount" Label="Sesijas" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            </MudStack>
+            <MudNumericField @bind-Value="InputSessionLongPause" Label="Garās pauzes intervāls" Variant="Variant.Outlined" Margin="Margin.Dense" />
 
-            </label>
-            <input type="number" class="form-control mb-2"  @bind="InputSessionLongPause" />
-    }
-    else 
-         {
-            @if(IsPause)
+
+        }
+        else
+        {
+            <MudStack Spacing="1">
+                @if (IsPause)
+                {
+                    <MudText>Pauzes laiks (～￣▽￣)～</MudText>
+                }
+
+                <MudText>Sesija @CurrSession/@InputSessionAmount</MudText>
+                <MudText Attrib="data-time-display">Atlikušais laiks: @DisplayTime</MudText>
+            </MudStack>
+        }
+
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-3">
+        @if (!StartBtnPressed)
             {
-                <p>Pauzes laiks (～￣▽￣)～</p>
-            }   
-                <p>Sesija @CurrSession/@InputSessionAmount</p>
-                <p>Atlikušais laiks: @DisplayTime</p>
-         }
-
-
-    <div class="d-flex justify-content-center gap-1 mx-auto flex-nowrap ">
-            @if (!StartBtnPressed) 
-            {
-            <button class="btn btn-primary" @onclick="SetTimer">Sākt</button>
-             }
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" @onclick="SetTimer">Sākt</MudButton>
+            }
             else
             {
                 @if (IsPause)
-                    {
-                <i @onclick="SkipPause" class="bi bi-skip-end-circle-fill icon-btn"></i>
-
-                    }
-                <button class="btn btn-secondary" @onclick="ResetTimer">Pārtraukt</button>
+                {
+                    <MudTooltip Text="Izlaist pauzi">
+                        <MudIconButton Icon="@Icons.Material.Filled.SkipNext" @onclick="SkipPause" />
+                    </MudTooltip>
+                }
+                <MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="ResetTimer">Stop</MudButton>
                 @if (!StopBtnPressed)
-                    {
-                <button class="btn btn-danger" @onclick="PauseTimer"><i class="bi bi-pause-fill"></i></button>
-
-                    }
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.PauseCircleFilled" Color="Color.Error" @onclick="PauseTimer"></MudIconButton>
+                }
                 else
-                    {
-                <button class="btn btn-success " @onclick="ContinueTimer"><i class="bi bi-play-fill"></i></button>
-                    }
-                <div class="d-flex flex-nowrap align-items-center gap-2">
-                <i @onclick="() => AdjustTime(false)" class="bi bi-dash-circle-fill icon-btn"></i>
-                <input type="number" class="form-control form-control-sm w-25" @bind="AdjustedMin" />
-                <i @onclick="() => AdjustTime(true)" class="bi bi-plus-circle-fill icon-btn"></i>
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.PlayCircleFilled" Color="Color.Success" @onclick="ContinueTimer"></MudIconButton>
+                }
 
-                </div>
-             }
+                    <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" @onclick="() => AdjustTime(false)"></MudIconButton>
+                     <MudNumericField @bind-Value="AdjustedMin" Width="25%" Label="Mainīt minūtes" Margin="Margin.Dense" Variant="Variant.Outlined"></MudNumericField>
+                    <MudIconButton Icon="@Icons.Material.Filled.AddCircle" @onclick="() => AdjustTime(true)"></MudIconButton>
+            }
+            </MudStack>
+    </MudContainer>
+</MudPaper>
 
-          
-        </div>
-</div>

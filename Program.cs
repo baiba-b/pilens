@@ -4,8 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Pilens.Components;
 using Pilens.Components.Account;
 using Pilens.Data;
+using MudBlazor.Services;
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddMudServices();
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
