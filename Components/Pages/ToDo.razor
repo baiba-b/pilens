@@ -1,51 +1,47 @@
 ﻿@page "/ToDo"
 @rendermode InteractiveServer
-<h3>ToDo</h3>
-<div class="container border p-2">
+
+ <MudPaper Class="mt-2 pa-3 d-inline-block">
+        <MudContainer>
+    <MudText Typo="Typo.h5" Align="Align.Center">To-Do</MudText>
+
     @foreach (var item in Items)
     {
-        <div class="d-flex align-items-center gap-2 py-1">
-            <input class="form-check-input mt-1" type="checkbox" @bind="item.IsCompleted" />
-
-            <div class="flex-grow-1 px-2 py-1">
-                <input class="form-control" @bind="item.Title" />
+        <MudStack Direction="Row">
+            <div class="d-flex flex-grow-1 gap-4">
+                    <MudCheckBox  Class="flex-initial" @bind-Value="item.IsCompleted" Color="Color.Primary"></MudCheckBox>
+                    <MudTextField  Class="flex-1" @bind-Value="item.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
             </div>
-        </div>
+            
+        </MudStack>
+     
     }
 
-    <div class="align-items-center gap-2 p-1 border">
-        <input type="text" class="form-control mb-2" @bind="newTaskTitle" @onclick="ToggleExpanded" placeholder="Pievieno uzdevuma nosaukumu" />
-
+    <MudStack  Direction="Column" Spacing="1" >
+            <MudTextField @bind-Value="newTaskTitle" Label="Nosaukums" @onclick="ToggleExpanded" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+            <MudTextField @bind-Value="newTaskDescription" Label="Apraksts" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
         @if (expanded)
         {
-            <input type="text" class="form-control mb-2" @bind="newTaskDescription" placeholder="Apraksts" />
+            <MudTextField @bind-Value="newTaskDescription" Label="Apraksts" Variant="Variant.Text"></MudTextField>
+            <MudStack AlignItems=AlignItems.Center>
+                    <MudDatePicker @bind-Date="newTaskDate" Label="Datums" DisableToolbar="false" />
+                    <MudTimePicker @bind-Time="newTaskTime" Label="Laiks" />
+                    <MudText>Grūtības pakāpe:</MudText>
+                    <MudRating SelectedValue="1" MaxValue="3"
+                               FullIcon="@Icons.Material.Filled.Square"
+                               EmptyIcon="@Icons.Material.Filled.Square"
+                               FullIconColor="Color.Primary"
+                               EmptyIconColor="Color.Default"
+                               @bind-Value="newTaskEffort" />
+                <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Size="Size.Large" @onclick="AddOrUpdateTask"></MudIconButton>
 
-            <div class="flex-fill text-center align-content-center" id="formFields">
-                <label class="form-label mt-2">Datums un laiks</label>
-                <input type="datetime-local" class="form-control mb-2 text-center" @bind="newTaskDeadline" />
 
-                <label for="effortLevel" class="form-label mt-1">Grūtības pakāpe</label>
-                <input type="range" @bind="newTaskEffort" class="form-range" min="1" max="3" step="1" id="effortLevel" />
-
-                <div class="mt-1">
-                    @switch (newTaskEffort)
-                    {
-                        case 1:
-                            <p class="text-success">Viegla</p>
-                            break;
-                        case 2:
-                            <p class="text-warning">Vidēja</p>
-                            break;
-                        case 3:
-                            <p class="text-danger">Smaga</p>
-                            break;
-                    }
-                </div>
-            </div>
+            </MudStack>
+         
         }
 
-        <div class="d-grid justify-content-center">
-            <i @onclick="AddOrUpdateTask" class="bi bi-plus-circle-fill icon-btn"></i>
-        </div>
-    </div>
-</div>
+    </MudStack>
+
+    </MudContainer>
+
+</MudPaper>

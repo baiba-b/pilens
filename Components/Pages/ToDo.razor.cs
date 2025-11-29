@@ -11,6 +11,10 @@
         public bool expanded = false;
         private ToDoTask? editingTask = null;
 
+        //Mudblazor nav DateTime komponentes, tādēļ sadalīju datumu un laiku
+        public DateTime? newTaskDate { get; set; }
+        public TimeSpan? newTaskTime { get; set; }
+
         void ToggleExpanded()
         {
             expanded = true;
@@ -20,12 +24,18 @@
         {
             if (!string.IsNullOrWhiteSpace(newTaskTitle))
             {
+                var date = newTaskDate ?? DateTime.Today;
+                var time = newTaskTime ?? TimeSpan.Zero;
+                var combined = date.Date + time;
+
+                newTaskDeadline = combined;
+
                 Items.Add(new ToDoTask
                 {
                     Title = newTaskTitle,
                     Description = newTaskDescription,
                     Effort = newTaskEffort,
-                    Deadline = newTaskDeadline
+                    Deadline = combined
                 });
 
                 ResetForm();
@@ -38,6 +48,8 @@
             newTaskDescription = string.Empty;
             newTaskEffort = 2;
             newTaskDeadline = DateTime.Now;
+            newTaskDate = null;
+            newTaskTime = null;
             expanded = false;
         }
     }
