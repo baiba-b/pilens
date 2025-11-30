@@ -1,47 +1,59 @@
 ﻿@page "/ToDo"
 @rendermode InteractiveServer
 
- <MudPaper Class="mt-2 pa-3 d-inline-block">
-        <MudContainer>
-    <MudText Typo="Typo.h5" Align="Align.Center">To-Do</MudText>
+<MudPaper Class="mt-2 pa-3 d-inline-block">
+    <MudContainer>
+        <MudStack Direction="Row" AlignItems=AlignItems.Center JustifyContent="SpaceBetween">
+            <MudText Typo="Typo.h5" Align="Align.Center">To-Do</MudText>
 
-    @foreach (var item in Items)
-    {
-        <MudStack Direction="Row">
-            <div class="d-flex flex-grow-1">
-                    <MudCheckBox  Class="flex-initial" @bind-Value="item.IsCompleted" Color="Color.Primary"></MudCheckBox>
-                    <MudTextField  Class="flex-1" @bind-Value="item.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
-            </div>
-            
-        </MudStack>
-     
-    }
 
-    <MudStack  Direction="Column" Spacing="1" >
-            <MudTextField @bind-Value="newTaskTitle" Label="Nosaukums" @onclick="ToggleExpanded" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-            <MudTextField @bind-Value="newTaskDescription" Label="Apraksts" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-        @if (expanded)
+        @if (!isAdding)
         {
-            <MudTextField @bind-Value="newTaskDescription" Label="Apraksts" Variant="Variant.Text"></MudTextField>
-            <MudStack AlignItems=AlignItems.Center>
+            @foreach (var item in Items)
+            {
+                    <MudStack Direction="Row" Class="mt-2">
+                    <div class="d-flex flex-grow-1 gap-2">
+                        <MudCheckBox Class="flex-initial" @bind-Value="item.IsCompleted" Color="Color.Primary"></MudCheckBox>
+                        <MudTextField Class="flex-1" @bind-Value="item.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEdit(item))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveTask(item))" />
+                    </div>
+         
+                </MudStack>
+            }
+                <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Primary" Size="Size.Medium" @onclick="ToggleIsAdding" />
+
+        }
+        else
+        {
+            <MudStack Direction="Column" Spacing="1" Class="mt-2">
+                <MudTextField @bind-Value="newTaskTitle" Label="Nosaukums" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="newTaskDescription" Label="Apraksts" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudStack AlignItems=AlignItems.Center Direction="Row" Spacing="2">
                     <MudDatePicker @bind-Date="newTaskDate" Label="Datums" DisableToolbar="false" />
                     <MudTimePicker @bind-Time="newTaskTime" Label="Laiks" />
-                    <MudText>Grūtības pakāpe:</MudText>
-                    <MudRating SelectedValue="1" MaxValue="3"
-                               FullIcon="@Icons.Material.Filled.Square"
-                               EmptyIcon="@Icons.Material.Filled.Square"
-                               FullIconColor="Color.Primary"
-                               EmptyIconColor="Color.Default"
-                               @bind-Value="newTaskEffort" />
-                <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Size="Size.Large" @onclick="AddOrUpdateTask"></MudIconButton>
 
+                    <MudStack Direction="Row" AlignItems=AlignItems.Center Spacing="1" Class="px-2">
+                        <MudText Class="me-1">Pieprasītais laiks:</MudText>
+                        <MudNumericField @bind-Value="newTaskEffortHours" Label="H" Min="0"
+                                         Max="999"
+                                         Variant="Variant.Outlined" />
+                        <MudNumericField @bind-Value="newTaskEffortMinutes" Label="Min"
+                                         Min="0"
+                                         Max="59"
+                                         Variant="Variant.Outlined"/>
+                    </MudStack>
 
+                    <MudIconButton Icon="@((editingTask == null) ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Save)" Size="Size.Large" Color="Color.Primary" @onclick="AddOrUpdateTask" />
+                </MudStack>
             </MudStack>
-         
         }
+                @if (isAdding)
+               {
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" Size="Size.Medium" @onclick="ToggleIsAdding" />
+                }
 
-    </MudStack>
+        </MudStack>
 
     </MudContainer>
-
 </MudPaper>
