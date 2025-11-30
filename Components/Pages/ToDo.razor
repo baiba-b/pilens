@@ -8,7 +8,7 @@
     @foreach (var item in Items)
     {
         <MudStack Direction="Row">
-            <div class="d-flex flex-grow-1 gap-4">
+            <div class="d-flex flex-grow-1">
                     <MudCheckBox  Class="flex-initial" @bind-Value="item.IsCompleted" Color="Color.Primary"></MudCheckBox>
                     <MudTextField  Class="flex-1" @bind-Value="item.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
             </div>
