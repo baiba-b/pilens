@@ -8,7 +8,7 @@ namespace Pilens.Components.Pages
     {
         private static System.Timers.Timer? aTimer;
         private static System.Timers.Timer? pTimer;
-        private int InputMinutes { get; set; } = 25;
+        private int InputMinutes { get; set; } = 25; 
         private int InputPauseMinutes { get; set; } = 5;
         private int InputLongPauseMinutes { get; set; } = 20; //vajadzēs iespēju skippot pauzi + 4 sesijai noņemt īso pauzi
         private int InputSessionAmount { get; set; } = 4; //  (viena sesija = 1 pomodoro + pauze)
@@ -27,6 +27,22 @@ namespace Pilens.Components.Pages
         private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
+
+        public bool IsRunning => StartBtnPressed;
+        public void AddSessions(int sessions)
+        {
+            if (sessions <= 0) return;
+
+            if (StartBtnPressed)
+            {
+                InputSessionAmount += sessions;
+                InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                InitializeAndStartSessions(sessions);
+            }
+        }
 
         // Funkcija, kas izveido  un sāk taimeri
         private void SetTimer() //System.Timer funkciju implementācijas piemērs & apraksts ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
