@@ -1,4 +1,6 @@
-﻿namespace Pilens.Components.Pages
+﻿using MudBlazor;
+
+namespace Pilens.Components.Pages
 {
     public partial class ToDo
     {
@@ -6,10 +8,14 @@
 
         private string? newTaskTitle = string.Empty;
         private string? newTaskDescription = string.Empty;
-        public int newTaskEffort = 2;
+
+        public string newTaskEffort = "00:30";
+
         public DateTime newTaskDeadline = DateTime.Now;
         public bool isAdding = false;
         private ToDoTask? editingTask = null;
+
+
 
         //Mudblazor nav DateTime komponentes, tādēļ sadalīju datumu un laiku
         public DateTime? newTaskDate { get; set; }
@@ -19,27 +25,22 @@
         public int newTaskEffortHours { get; set; } = 0;
         public int newTaskEffortMinutes { get; set; } = 30;
 
+        public IEnumerable<string> selectedGroupForNewTask { get; set; } = new HashSet<string> { "General" };
+
+        public List<string> Groups { get; set; } = new List<string>() { "General" };
+
+        private string? newGroupName { get; set; }
+        private void ItemUpdated(MudItemDropInfo<ToDoTask> dropItem)
+        {
+            dropItem.Item.Identifier = dropItem.DropzoneIdentifier;
+        }
+
         void ToggleIsAdding()
         {
             // Toggle, bet atjaunot formu, kad rediģē
             isAdding = !isAdding;
             if (!isAdding)
                 ResetForm();
-        }
-
-        private void StartEdit(ToDoTask task)
-        {
-            if (task == null) return;
-            editingTask = task;
-            newTaskTitle = task.Title;
-            newTaskDescription = task.Description;
-            newTaskEffort = task.Effort;
-            newTaskDeadline = task.Deadline;
-            newTaskDate = task.Deadline.Date;
-            newTaskTime = task.Deadline.TimeOfDay;
-            newTaskEffortHours = task.EffortDuration.Hours + task.EffortDuration.Days * 24;
-            newTaskEffortMinutes = task.EffortDuration.Minutes;
-            isAdding = true;
         }
 
         private void AddOrUpdateTask()
@@ -50,64 +51,112 @@
             var date = newTaskDate ?? DateTime.Today;
             var time = newTaskTime ?? TimeSpan.Zero;
             var combined = date.Date + time;
-
             newTaskDeadline = combined;
 
-            var effortSpan = new TimeSpan(newTaskEffortHours, newTaskEffortMinutes, 0);
+            if (!TimeSpan.TryParseExact(newTaskEffort, "hh\\:mm", null, out var effortSpan))
+                return;
+
+            var totalMinutes = (int)effortSpan.TotalMinutes;
+
+            if (!string.IsNullOrWhiteSpace(newGroupName))
+            {
+                if (!Groups.Contains(newGroupName))
+                    Groups.Add(newGroupName);
+
+                var selected = selectedGroupForNewTask?.ToList() ?? new List<string>();
+                if (!selected.Contains(newGroupName))
+                    selected.Add(newGroupName);
+                selectedGroupForNewTask = selected;
+            }
 
             if (editingTask != null)
             {
-                // Rediģē 
                 editingTask.Title = newTaskTitle;
                 editingTask.Description = newTaskDescription ?? string.Empty;
-                editingTask.Effort = newTaskEffort;
+                editingTask.Effort = totalMinutes;
                 editingTask.Deadline = combined;
                 editingTask.EffortDuration = effortSpan;
+
+                editingTask.Groups = selectedGroupForNewTask.ToList();
+
                 editingTask = null;
             }
             else
             {
-                // Pievieno jaunu uzdevumu
-                Items.Add(new ToDoTask
-                {
-                    Title = newTaskTitle,
-                    Description = newTaskDescription,
-                    Effort = newTaskEffort,
-                    Deadline = combined,
-                    EffortDuration = effortSpan
-                });
+                Items.Add(
+                    new ToDoTask
+                    {
+                        Title = newTaskTitle ?? string.Empty,
+                        Description = newTaskDescription ?? string.Empty,
+                        Effort = totalMinutes,
+                        Deadline = combined,
+                        EffortDuration = effortSpan,
+                        Identifier = "Saraksts",
+                        Groups = selectedGroupForNewTask.ToList()
+                    }
+                );
             }
 
             ResetForm();
         }
 
+        private void StartEdit(ToDoTask task)
+        {
+            if (task == null) return;
+            editingTask = task;
+            newTaskTitle = task.Title;
+            newTaskDescription = task.Description;
+            var totalMinutes = task.Effort > 0 ? task.Effort : (int)task.EffortDuration.TotalMinutes;
+            newTaskEffort = $"{totalMinutes / 60:00}:{totalMinutes % 60:00}";
+            newTaskDeadline = task.Deadline;
+            newTaskDate = task.Deadline.Date;
+            newTaskTime = task.Deadline.TimeOfDay;
+
+            selectedGroupForNewTask = task.Groups?.ToList() ?? new List<string>();
+
+            newGroupName = null;
+            isAdding = true;
+        }
+
         private void RemoveTask(ToDoTask task)
         {
             if (task == null) return;
-            // atceļ redi
             if (editingTask == task)
                 ResetForm();
 
             Items.Remove(task);
         }
 
-        private void CancelEdit()
-        {
-            ResetForm();
-        }
+        private void CancelEdit() => ResetForm();
 
         private void ResetForm()
         {
             newTaskTitle = string.Empty;
             newTaskDescription = string.Empty;
-            newTaskEffort = 2;
+            newTaskEffort = "00:30";
             newTaskDeadline = DateTime.Now;
             newTaskDate = null;
             newTaskTime = null;
-            newTaskEffortHours = 0;
-            newTaskEffortMinutes = 30;
             isAdding = false;
             editingTask = null;
+
+            selectedGroupForNewTask = new List<string>();
+            newGroupName = null;
+        }
+
+        private bool TryParseEffortToMinutes(string? hhmm, out int minutes)
+        {
+            minutes = 0;
+            if (string.IsNullOrWhiteSpace(hhmm)) return false;
+
+            var parts = hhmm.Split(':');
+            if (parts.Length != 2) return false;
+            if (!int.TryParse(parts[0], out var h)) return false;
+            if (!int.TryParse(parts[1], out var m)) return false;
+            if (h < 0 || m < 0 || m > 59) return false;
+
+            minutes = h * 60 + m;
+            return true;
         }
     }
 }
@@ -117,8 +166,9 @@ public partial class ToDoTask
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsCompleted { get; set; } = false;
-    public int Effort { get; set; } = 2;
+    public int Effort { get; set; } = 0;
     public DateTime Deadline { get; set; } = DateTime.Now;
-
     public TimeSpan EffortDuration { get; set; } = TimeSpan.Zero;
+    public List<string> Groups { get; set; } = new();
+    public string Identifier { get; set; } = "Saraksts";
 }
