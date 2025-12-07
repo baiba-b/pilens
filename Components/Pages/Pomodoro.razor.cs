@@ -20,7 +20,6 @@ namespace Pilens.Components.Pages
         private bool StopBtnPressed  { get; set; } = false;
         private bool IsPause { get; set; } = false;
         private int AdjustedMin { get; set; } = 5;
-
         private bool isDone { get; set; } = false;
 
 
@@ -177,8 +176,17 @@ namespace Pilens.Components.Pages
                 else RemainingSeconds = 0;
             }
                 
-            
         
+        }
+
+ 
+        public void InitializeAndStartSessions(int sessions)
+        {
+            InputSessionAmount = sessions;
+            CurrSession = 0;
+            isDone = false;
+            StartBtnPressed = true;
+            SetTimer();
         }
     }
 }

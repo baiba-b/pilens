@@ -14,6 +14,8 @@ namespace Pilens.Components.Pages
         public DateTime newTaskDeadline = DateTime.Now;
         public bool isAdding = false;
         private ToDoTask? editingTask = null;
+        // Aprēķinātais sesiju skaits izpildei, ja uzdevums ir "Sesijas" tipa
+        public int SessionsRequired { get; set; } = 0;
 
 
 
@@ -33,7 +35,26 @@ namespace Pilens.Components.Pages
         private void ItemUpdated(MudItemDropInfo<ToDoTask> dropItem)
         {
             dropItem.Item.Identifier = dropItem.DropzoneIdentifier;
+
+            // Aprēķina sesiju skaitu  no EffortDuration un apaļo uz augšu
+            var minutes = (int)Math.Ceiling(dropItem.Item.EffortDuration.TotalMinutes);
+
+            if (dropItem.DropzoneIdentifier == "Sesijas")
+            {
+                const int pomodoroMinutes = 25;
+                dropItem.Item.SessionsRequired = minutes > 0
+                    ? (int)Math.Ceiling(minutes / (double)pomodoroMinutes)
+                    : 0;
+            }
+            else
+            {
+                dropItem.Item.SessionsRequired = 0;
+            }
+
+            InvokeAsync(StateHasChanged);
         }
+
+        public int TotalSessions => Items.Where(i => i.Identifier == "Sesijas").Sum(i => i.SessionsRequired);
 
         void ToggleIsAdding()
         {
@@ -92,7 +113,8 @@ namespace Pilens.Components.Pages
                         Deadline = combined,
                         EffortDuration = effortSpan,
                         Identifier = "Saraksts",
-                        Groups = selectedGroupForNewTask.ToList()
+                        Groups = selectedGroupForNewTask.ToList(),
+                        SessionsRequired = 0                     
                     }
                 );
             }
@@ -171,4 +193,6 @@ public partial class ToDoTask
     public TimeSpan EffortDuration { get; set; } = TimeSpan.Zero;
     public List<string> Groups { get; set; } = new();
     public string Identifier { get; set; } = "Saraksts";
+
+    public int SessionsRequired { get; set; } = 0;
 }

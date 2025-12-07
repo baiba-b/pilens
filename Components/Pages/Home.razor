@@ -1,8 +1,12 @@
 ﻿@page "/"
 <PageTitle>Home</PageTitle>
 <MudStack Direction="Row" Spacing="3">
-    <ToDo />
-    <Pomodoro />
-    </MudStack>
-  
+    <ToDo @ref="toDoRef" />
+    <Pomodoro @ref="pomodoroRef" />
+</MudStack>
 
+<MudStack Class="mt-2" Direction="Row" Spacing="2">
+    <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="StartAggregatedPomodoro">
+        Sākt Pomodoro visiem "Sesijas" uzdevumiem
+    </MudButton>
+</MudStack>
