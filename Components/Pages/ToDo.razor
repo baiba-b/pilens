@@ -8,29 +8,45 @@
 
         @if (!isAdding)
         {
-                <MudDropContainer T="ToDoTask" Items="Items" ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1">
-                        <ChildContent>
-                        <MudDropZone T="ToDoTask" Items="Items" Identifier="Saraksts" Class="rounded mud-background-gray pa-2 ma-8 flex-grow-1">
-                            <MudText Typo="Typo.h6" Class="mb-4">Saraksts</MudText>
-                        </MudDropZone>
+            <MudDropContainer T="ToDoTask" Items="Items" ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1">
+                <ChildContent>
+                    <MudDropZone T="ToDoTask" Items="Items" Identifier="Saraksts" Class="rounded mud-background-gray pa-2 ma-8 flex-grow-1">
+                        <MudText Typo="Typo.h6" Class="mb-4">Saraksts</MudText>
+                    </MudDropZone>
 
-                        <MudDropZone T="ToDoTask" Items="Items" Identifier="Sesijas" Class="rounded mud-background-gray pa-2 ma-8 flex-grow-1">
-                            <MudStack>
-                                <MudText Typo="Typo.h6">Sesijas darāmais</MudText>
-                                <MudText Typo="Typo.subtitle2">Kopā sesijas: @TotalSessions</MudText>
-                            </MudStack>
-                        </MudDropZone>
-                        </ChildContent>
+                    <MudDropZone T="ToDoTask" Items="Items" Identifier="Sesijas" Class="rounded mud-background-gray pa-2 ma-8 flex-grow-1">
+                        <MudStack>
+                            <MudText Typo="Typo.h6">Sesijas darāmais</MudText>
+                            <MudText Typo="Typo.subtitle2">Kopā sesijas: @TotalSessions</MudText>
+                        </MudStack>
+                    </MudDropZone>
+                </ChildContent>
 
-                        <ItemRenderer>
-                        <div class="d-flex flex-grow-1 gap-2">
-                            <MudCheckBox Class="flex-initial" @bind-Value="@context.IsCompleted" Color="Color.Primary" />
-                            <MudTextField Class="flex-1" @bind-Value="@context.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEdit(@context))" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveTask(@context))" />
-                        </div>
-                        </ItemRenderer>
-                </MudDropContainer>
+                <ItemRenderer>
+                    <div class="d-flex flex-grow-1 gap-2 align-items-center">
+                             <MudCheckBox Class="flex-initial" @bind-Value="@context.IsCompleted" Color="Color.Primary" />
+
+                        <MudStack>
+                                <MudTextField Class="flex-1" @bind-Value="@context.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />
+
+
+                                <MudStack Class="flex-1" Spacing="0">
+                                    <MudProgressLinear Color="Color.Primary"
+                                                       Value="@GetProgressPercent(context)"
+                                                       Class="my-1" />
+                                    <MudText Typo="Typo.caption">
+                                        @($"{context.ProgressCurrentUnits}/{context.ProgressTargetUnits} {context.ProgressUnitType}")
+                                    </MudText>
+                                </MudStack>
+
+                        </MudStack>
+               
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => StartEdit(@context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveTask(@context))" />
+                    </div>
+                </ItemRenderer>
+            </MudDropContainer>
             <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Primary" Size="Size.Medium" @onclick="ToggleIsAdding" />
         }
         else
@@ -45,19 +61,19 @@
                     <MudStack Direction="Row" AlignItems=AlignItems.Center Spacing="1" Class="px-2">
                         <MudText Class="me-1">Pieprasītais laiks:</MudText>
                         <MudTextField  @bind-value="newTaskEffort"
-                            Label="hh:mm"
-                            Mask="@(new PatternMask("00:00"))" 
-                            Margin="Margin.Dense"
-                            Variant="Variant.Outlined"
-                            Placeholder="00:30" />
+                                       Label="hh:mm"
+                                       Mask="@(new PatternMask("00:00"))" 
+                                       Margin="Margin.Dense"
+                                       Variant="Variant.Outlined"
+                                       Placeholder="00:30" />
                     </MudStack>
 
-                        <MudSelect T="string" Label="Kategorijas"  @bind-SelectedValues="selectedGroupForNewTask" MultiSelection="true">
+                    <MudSelect T="string" Label="Kategorijas"  @bind-SelectedValues="selectedGroupForNewTask" MultiSelection="true">
                         @foreach (var g in Groups)
                         {
                             <MudSelectItem Value="@g">@g</MudSelectItem>
                         }
-                         </MudSelect>
+                    </MudSelect>
 
                     <MudTextField @bind-Value="newGroupName"
                                   Label="Jauna grupa"
@@ -66,14 +82,47 @@
                                   Placeholder="Vēsture"
                                   Class="ms-2" />
 
-                    <MudIconButton Icon="@((editingTask == null) ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Save)" Size="Size.Large" Color="Color.Primary" @onclick="AddOrUpdateTask" />
+                </MudStack>
+
+                <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1" Class="mt-2">
+                    <MudNumericField @bind-Value="newProgressCurrentUnits"
+                                     Label="Progresa esošās vienības"
+                                     Min="0"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense" />
+                    <MudText>/</MudText>
+                    <MudNumericField @bind-Value="newProgressTargetUnits"
+                                     Label="Progresa mērķa vienības"
+                                     Min="0"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="newProgressUnitType"
+                                  Label="Vienības tips progresam"
+                                  Placeholder="lpp"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" />
+                </MudStack>
+
+                <MudStack Spacing="0" Class="mt-1" Style="max-width: 420px;">
+                    <MudProgressLinear Color="Color.Primary"
+                                       Value="@((newProgressTargetUnits > 0) ? (double)newProgressCurrentUnits / newProgressTargetUnits * 100.0 : 0)"
+                                       Class="my-1" />
+                    <MudText Typo="Typo.caption">
+                        @($"{newProgressCurrentUnits}/{newProgressTargetUnits} {newProgressUnitType}")
+                    </MudText>
                 </MudStack>
             </MudStack>
+                <div class="d-flex">
+                    <MudIconButton Icon="@((editingTask == null) ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Save)" Size="Size.Large" Color="Color.Primary" @onclick="AddOrUpdateTask" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" Size="Size.Medium" @onclick="ToggleIsAdding" />
+            </div>
+   
+
+
         }
-        @if (isAdding)
+        @* @if (isAdding)
         {
-            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" Size="Size.Medium" @onclick="ToggleIsAdding" />
-        }
+        } *@
 
         </MudStack>
 

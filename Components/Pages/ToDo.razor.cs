@@ -31,6 +31,10 @@ namespace Pilens.Components.Pages
 
         public List<string> Groups { get; set; } = new List<string>() { "General" };
 
+        public int newProgressTargetUnits { get; set; } = 0;        // Progresa mērķa vienības
+        public int newProgressCurrentUnits { get; set; } = 0;       // Progresa esošās vienības
+        public string? newProgressUnitType { get; set; } = "lpp";   // Vienības tips progresam (piem., lpp)
+
         private string? newGroupName { get; set; }
         private void ItemUpdated(MudItemDropInfo<ToDoTask> dropItem)
         {
@@ -97,9 +101,10 @@ namespace Pilens.Components.Pages
                 editingTask.Effort = totalMinutes;
                 editingTask.Deadline = combined;
                 editingTask.EffortDuration = effortSpan;
-
+                editingTask.ProgressCurrentUnits = newProgressCurrentUnits;
+                editingTask.ProgressTargetUnits = newProgressTargetUnits;
+                editingTask.ProgressUnitType = newProgressUnitType;
                 editingTask.Groups = selectedGroupForNewTask.ToList();
-
                 editingTask = null;
             }
             else
@@ -114,7 +119,10 @@ namespace Pilens.Components.Pages
                         EffortDuration = effortSpan,
                         Identifier = "Saraksts",
                         Groups = selectedGroupForNewTask.ToList(),
-                        SessionsRequired = 0                     
+                        SessionsRequired = 0,
+                        ProgressCurrentUnits = newProgressCurrentUnits,
+                        ProgressTargetUnits = newProgressTargetUnits,
+                        ProgressUnitType = newProgressUnitType
                     }
                 );
             }
@@ -133,9 +141,10 @@ namespace Pilens.Components.Pages
             newTaskDeadline = task.Deadline;
             newTaskDate = task.Deadline.Date;
             newTaskTime = task.Deadline.TimeOfDay;
-
+            newProgressCurrentUnits = task.ProgressCurrentUnits;
+            newProgressTargetUnits = task.ProgressTargetUnits;
+            newProgressUnitType = task.ProgressUnitType;
             selectedGroupForNewTask = task.Groups?.ToList() ?? new List<string>();
-
             newGroupName = null;
             isAdding = true;
         }
@@ -160,8 +169,10 @@ namespace Pilens.Components.Pages
             newTaskDate = null;
             newTaskTime = null;
             isAdding = false;
+            newProgressUnitType = "lpp";
+            newProgressTargetUnits = 0;
+            newProgressCurrentUnits = 0;
             editingTask = null;
-
             selectedGroupForNewTask = new List<string>();
             newGroupName = null;
         }
@@ -180,6 +191,17 @@ namespace Pilens.Components.Pages
             minutes = h * 60 + m;
             return true;
         }
+
+       
+        private static double GetProgressPercent(ToDoTask task)
+        {
+            if (task == null) return 0;
+            if (task.ProgressTargetUnits <= 0) return 0;
+            var percent = (double)task.ProgressCurrentUnits / task.ProgressTargetUnits * 100.0;
+            if (percent < 0) return 0;
+            if (percent > 100) return 100;
+            return percent;
+        }
     }
 }
 
@@ -195,4 +217,8 @@ public partial class ToDoTask
     public string Identifier { get; set; } = "Saraksts";
 
     public int SessionsRequired { get; set; } = 0;
+
+    public int ProgressTargetUnits { get; set; } = 0;
+    public int ProgressCurrentUnits { get; set; } = 0;
+    public string ProgressUnitType { get; set; } = "lpp";
 }
