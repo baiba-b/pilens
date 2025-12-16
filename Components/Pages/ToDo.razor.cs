@@ -1,9 +1,18 @@
-﻿using MudBlazor;
+﻿using Microsoft.EntityFrameworkCore;
+using MudBlazor;
+using Pilens.Data;
+using Pilens.Data.Models;
 
 namespace Pilens.Components.Pages
 {
     public partial class ToDo
     {
+        //private readonly ApplicationDbContext _context;
+
+        //public ToDo(ApplicationDbContext context)
+        //{
+        //    _context = context;
+        //}
         public List<ToDoTask> Items { get; set; } = new List<ToDoTask>();
 
         private string? newTaskTitle = string.Empty;
@@ -104,7 +113,9 @@ namespace Pilens.Components.Pages
                 editingTask.ProgressCurrentUnits = newProgressCurrentUnits;
                 editingTask.ProgressTargetUnits = newProgressTargetUnits;
                 editingTask.ProgressUnitType = newProgressUnitType;
-                editingTask.Groups = selectedGroupForNewTask.ToList();
+                editingTask.Groups = selectedGroupForNewTask
+                    .Select(name => new Group { Name = name })
+                    .ToList();
                 editingTask = null;
             }
             else
@@ -118,7 +129,9 @@ namespace Pilens.Components.Pages
                         Deadline = combined,
                         EffortDuration = effortSpan,
                         Identifier = "Saraksts",
-                        Groups = selectedGroupForNewTask.ToList(),
+                        Groups = selectedGroupForNewTask
+                            .Select(name => new Group { Name = name })
+                            .ToList(),
                         SessionsRequired = 0,
                         ProgressCurrentUnits = newProgressCurrentUnits,
                         ProgressTargetUnits = newProgressTargetUnits,
@@ -136,6 +149,7 @@ namespace Pilens.Components.Pages
             editingTask = task;
             newTaskTitle = task.Title;
             newTaskDescription = task.Description;
+
             var totalMinutes = task.Effort > 0 ? task.Effort : (int)task.EffortDuration.TotalMinutes;
             newTaskEffort = $"{totalMinutes / 60:00}:{totalMinutes % 60:00}";
             newTaskDeadline = task.Deadline;
@@ -144,7 +158,7 @@ namespace Pilens.Components.Pages
             newProgressCurrentUnits = task.ProgressCurrentUnits;
             newProgressTargetUnits = task.ProgressTargetUnits;
             newProgressUnitType = task.ProgressUnitType;
-            selectedGroupForNewTask = task.Groups?.ToList() ?? new List<string>();
+            selectedGroupForNewTask = task.Groups?.Select(g => g.Name).ToList() ?? new List<string>();
             newGroupName = null;
             isAdding = true;
         }
@@ -205,20 +219,3 @@ namespace Pilens.Components.Pages
     }
 }
 
-public partial class ToDoTask
-{
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public bool IsCompleted { get; set; } = false;
-    public int Effort { get; set; } = 0;
-    public DateTime Deadline { get; set; } = DateTime.Now;
-    public TimeSpan EffortDuration { get; set; } = TimeSpan.Zero;
-    public List<string> Groups { get; set; } = new();
-    public string Identifier { get; set; } = "Saraksts";
-
-    public int SessionsRequired { get; set; } = 0;
-
-    public int ProgressTargetUnits { get; set; } = 0;
-    public int ProgressCurrentUnits { get; set; } = 0;
-    public string ProgressUnitType { get; set; } = "lpp";
-}
