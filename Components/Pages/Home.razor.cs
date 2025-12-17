@@ -1,25 +1,36 @@
 ﻿using Pilens.Components.Pages.todo;
+using System.Threading.Tasks;
 
 namespace Pilens.Components.Pages
 {
     public partial class Home
     {
+        public const string SessionsMustBePositiveMessage = "Sesiju skaitam jābūt pozitīvam.";
+        public const string PomodoroUnavailableMessage = "Pomodoro modulis nav pieejams.";
+
         private ToDo? toDoRef;
         private Pilens.Components.Pages.Pomodoro? pomodoroRef;
         public string errorMessage { get; set; } = string.Empty;
 
-        //private void StartAggregatedPomodoro()
-        //{
-        //    var sessions = toDoRef?.TotalSessions ?? 0;
-        //    if (sessions <= 0)
-        //    {
-        //        errorMessage = "Sesiju skaitam jābūt pozitīvam.";
-        //        return;
-        //    }
+        private async Task HandleStartPomodoro(int sessions)
+        {
+            if (sessions <= 0)
+            {
+                errorMessage = Home.SessionsMustBePositiveMessage;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
 
-        //    errorMessage = string.Empty;
+            if (pomodoroRef == null)
+            {
+                errorMessage = Home.PomodoroUnavailableMessage;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
 
-        //    pomodoroRef?.AddSessions(sessions);
-        //}
+            errorMessage = string.Empty;
+            pomodoroRef.AddSessions(sessions);
+            await InvokeAsync(StateHasChanged);
+        }
     }
 }

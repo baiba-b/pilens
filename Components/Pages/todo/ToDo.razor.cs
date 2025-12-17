@@ -12,8 +12,13 @@ namespace Pilens.Components.Pages.todo
 {
     public partial class ToDo
     {
+        private const string SessionsMustBePositiveMessage = "Sesiju skaitam jābūt pozitīvam.";
+
         [Inject]
         private ApplicationDbContext Db { get; set; } = default;
+
+        [Parameter]
+        public EventCallback<int> OnStartPomodoro { get; set; }
 
         private List<ToDoTask> Items { get; set; } = new();
         private string? ErrorMessage { get; set; }
@@ -21,6 +26,8 @@ namespace Pilens.Components.Pages.todo
         private int TotalSessions => Items
             .Where(task => task.Identifier == "Sesijas")
             .Sum(task => task.SessionsRequired);
+
+        private bool CanStartPomodoro => TotalSessions > 0;
 
         protected override async Task OnInitializedAsync()
         {
@@ -84,6 +91,22 @@ namespace Pilens.Components.Pages.todo
 
             await Db.SaveChangesAsync();
             await LoadTasksAsync();
+        }
+
+        private async Task StartPomodoroFromDropzoneAsync()
+        {
+            if (!CanStartPomodoro)
+            {
+                ErrorMessage = SessionsMustBePositiveMessage;
+                return;
+            }
+
+            ErrorMessage = null;
+
+            if (OnStartPomodoro.HasDelegate)
+            {
+                await OnStartPomodoro.InvokeAsync(TotalSessions);
+            }
         }
 
         private async Task ToggleCompletion(ToDoTask task)

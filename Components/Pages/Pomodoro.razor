@@ -1,6 +1,6 @@
 ﻿@page "/Pomodoro"
-<MudPaper Class="mt-2 pa-2 d-inline-block">
-     <MudContainer>
+<MudPaper Class="mt-2 pa-2 d-inline-block" Style="max-width: 420px; width: 100%;">
+     <MudContainer >
         <MudText Typo="Typo.h5" Align="Align.Center">Pomodoro</MudText>
 
         @if (!StartBtnPressed)
@@ -21,9 +21,13 @@
         else
         {
             <MudStack Spacing="1">
-                @if (IsPause)
+                @if (IsShortPause)
                 {
-                    <MudText>Pauzes laiks (～￣▽￣)～</MudText>
+                    <MudText>Īsās pauzes laiks (～￣▽￣)～</MudText>
+                }
+                else if (IsLongPause)
+                {
+                    <MudText>Garās pauzes laiks (～￣▽￣)～</MudText>
                 }
 
                 <MudText>Sesija @CurrSession/@InputSessionAmount</MudText>
@@ -39,13 +43,13 @@
             }
             else
             {
-                @if (IsPause)
+                @if (IsShortPause || IsLongPause)
                 {
                     <MudTooltip Text="Izlaist pauzi">
                         <MudIconButton Icon="@Icons.Material.Filled.SkipNext" @onclick="SkipPause" />
                     </MudTooltip>
                 }
-                <MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="ResetTimer">Stop</MudButton>
+                <MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="RestartTimer">Stop</MudButton>
                 @if (!StopBtnPressed)
                 {
                     <MudIconButton Icon="@Icons.Material.Filled.PauseCircleFilled" Color="Color.Error" @onclick="PauseTimer"></MudIconButton>

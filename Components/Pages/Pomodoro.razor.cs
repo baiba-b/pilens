@@ -19,7 +19,8 @@ namespace Pilens.Components.Pages
         private string? ErrorMessage { get; set; }
         private bool StartBtnPressed { get; set; } = false;
         private bool StopBtnPressed  { get; set; } = false;
-        private bool IsPause { get; set; } = false;
+        private bool IsShortPause { get; set; } = false;
+        private bool IsLongPause { get; set; } = false;
         private int AdjustedMin { get; set; } = 5;
         private bool isDone { get; set; } = false;
 
@@ -95,19 +96,27 @@ namespace Pilens.Components.Pages
                     aTimer.Dispose();
                     aTimer = null;
                     CurrSession++;
-                    IsPause = true;
-               
-                    if (CurrSession < InputSessionAmount && CurrSession % InputSessionLongPause != 0) SetPause(InputPauseMinutes);
-                    else if (CurrSession <= InputSessionAmount) SetPause(InputLongPauseMinutes);
+
+                    if (CurrSession < InputSessionAmount && CurrSession % InputSessionLongPause != 0)
+                    {
+                        IsShortPause = true;
+                        SetPause(InputPauseMinutes);
+                    }
+                    else if (CurrSession < InputSessionAmount)
+                    {
+                        IsLongPause = true;
+                        SetPause(InputLongPauseMinutes);
+                    }
                     else
                     {                         //Restartē visu pēc visu sesiju pabeigšanas
-                        InputMinutes = 25;
+                        
+
+                        InputMinutes = InputMinutes;
                         RemainingSeconds = 0;
                         StartBtnPressed = false;
                         StopBtnPressed = false;
                         CurrSession = 0;
-                        IsPause = false;
-                        StartBtnPressed = false;
+                        InvokeAsync(StateHasChanged);
                     }
 
                 }
@@ -125,25 +134,20 @@ namespace Pilens.Components.Pages
                 }
                 else
                 {
-                    IsPause = false;
+                    pTimer?.Stop();
+                    pTimer?.Dispose();
+                    pTimer = null;
+
+                    DeactivateActivePause();
                     SetTimer();
                 }
             }
         }
 
-        //Funkcija, kas aptur taimeri
-        private void PauseTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
-        {
-                
-           if(!IsPause) aTimer.Stop();
-           else pTimer.Stop();
-            StopBtnPressed = true;
-        }
-      
         // Funkcija, kas atiestata taimeri uz sākotnējo stāvokli
-        private void ResetTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        private void RestartTimer()
         {
-            if (!IsPause)
+            if (!IsShortPause && !IsLongPause)
             {
                 aTimer.Stop();
                 aTimer.Dispose();
@@ -155,34 +159,57 @@ namespace Pilens.Components.Pages
                 pTimer.Dispose();
                 pTimer = null;
             }
-            IsPause = false;
-             
 
-            InputMinutes = 25;
+            DeactivateActivePause();
+
+            InputMinutes = InputMinutes;
             RemainingSeconds = 0;
             StartBtnPressed = false;
             StopBtnPressed = false;
             CurrSession = 0;
             InvokeAsync(StateHasChanged);
         }
-        // Funkcija, kas turpina taimeri pēc apturēšanas
-        private void ContinueTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
-        {
-            if (!IsPause) aTimer.Start();
-            else pTimer.Start();
-            StopBtnPressed = false;
-            InvokeAsync(StateHasChanged);
-        }
+
         private void SkipPause(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
             pTimer.Stop();
             pTimer.Dispose();
             pTimer = null;
-            IsPause = false;
+            DeactivateActivePause();
             SetTimer();
-
         }
-        // Funkcija, kas pielāgo taimeri pēc lietotāja ievades
+
+        private void DeactivateActivePause()
+        {
+            if (IsShortPause)
+            {
+                IsShortPause = false;
+                return;
+            }
+
+            if (IsLongPause)
+            {
+                IsLongPause = false;
+            }
+        }
+
+        //Funkcija, kas aptur taimeri
+        private void PauseTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        {
+                
+           if(!IsShortPause && !IsLongPause) aTimer.Stop();
+           else pTimer.Stop();
+           StopBtnPressed = true;
+        }
+      
+        // Funkcija, kas turpina taimeri pēc apturēšanas
+        private void ContinueTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        {
+            if (!IsShortPause && !IsLongPause) aTimer.Start();
+            else pTimer.Start();
+            StopBtnPressed = false;
+            InvokeAsync(StateHasChanged);
+        }
         private void AdjustTime(bool adjustType)
         {
             if (adjustType == true)
@@ -197,7 +224,6 @@ namespace Pilens.Components.Pages
                 
         
         }
-
  
         public void InitializeAndStartSessions(int sessions)
         {

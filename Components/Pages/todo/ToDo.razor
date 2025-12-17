@@ -9,17 +9,35 @@
         <MudText>@ErrorMessage</MudText>
         <MudDropContainer T="ToDoTask" Items="Items" ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1">
             <ChildContent>
-                    <MudDropZone T="ToDoTask" Items="Items" Identifier="Saraksts" Class="rounded-lg mud-alert-text-info pa-4 ma-4 flex-grow-1">
-                        <MudText Typo="Typo.h6" Class="mb-4">Saraksts</MudText>
-                    </MudDropZone>
-            
-                    <MudDropZone T="ToDoTask" Items="Items" Identifier="Sesijas" Class="rounded-lg mud-alert-text-success pa-4 ma-4 flex-grow-1">
-                        <MudStack>
-                            <MudText Typo="Typo.h6">Sesijas darāmais</MudText>
-                            <MudText Typo="Typo.subtitle2">Kopā sesijas: @TotalSessions</MudText>
-                        </MudStack>
-                    </MudDropZone>
-           
+                <MudGrid Spacing="4">
+                    <MudItem xs="12" md="6">
+                        <MudDropZone T="ToDoTask"
+                                     Items="Items"
+                                     Identifier="Saraksts"
+                                     Class="rounded-lg mud-alert-text-info pa-4 h-100">
+                            <MudText Typo="Typo.h6" Class="mb-4">Saraksts</MudText>
+                        </MudDropZone>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDropZone T="ToDoTask"
+                                     Items="Items"
+                                     Identifier="Sesijas"
+                                     Class="rounded-lg mud-alert-text-success pa-4 h-100">
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.h6">Sesijas darāmais</MudText>
+                                <MudText Typo="Typo.subtitle2">Kopā sesijas: @TotalSessions</MudText>
+                            </MudStack>
+                        </MudDropZone>
+                        <MudCardActions Class="mt-4">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Disabled="@(!CanStartPomodoro)"
+                                       OnClick="StartPomodoroFromDropzoneAsync">
+                                Sākt Pomodoro
+                            </MudButton>
+                        </MudCardActions>
+                    </MudItem>
+                </MudGrid>
             </ChildContent>
 
             <ItemRenderer>
