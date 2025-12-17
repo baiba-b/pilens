@@ -20,52 +20,32 @@
   
         <MudStack Direction="Row" Spacing="2">
             <MudTextField @bind-value="todoTask.EffortDuration"
-                          Label="hh:mm"
+                          Label="Nepieciešamais laiks izpildei"
                           Mask="@(new PatternMask("00:00"))"
                           Margin="Margin.Dense"
                           Variant="Variant.Outlined"
                           Placeholder="00:30" />
             <MudTextField @bind-value="todoTask.Effort"
-                          Label="1-3"
+                          Label="Grūtības līmenis (1-3)"
                           Margin="Margin.Dense"
                           Variant="Variant.Outlined"
                           Placeholder="0" />
 
         </MudStack>
 
-        <MudTextField T="DateTime"
-                      @bind-Value="todoTask.Deadline"
-                      InputType="InputType.DateTimeLocal"
-                      Label="Termiņš"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      For="@(() => todoTask.Deadline)" />
+        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTask.Deadline">
+
+                      </MudDatePicker>
 
         <MudStack Direction="Row" AlignItems=AlignItems.Center Spacing="1">
-            <MudSwitch @bind-Checked="todoTask.IsCompleted"
-                       Color="Color.Success"
-                       Label="Pabeigts"
-                       For="@(() => todoTask.IsCompleted)" />
-
-            <MudTextField @bind-Value="todoTask.Identifier"
-                          Label="Saraksts / identifikators"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          For="@(() => todoTask.Identifier)" />
+   
         </MudStack>
 
         <MudStack Direction="Row" Spacing="2">
-            <MudNumericField T="int"
-                             @bind-Value="todoTask.SessionsRequired"
-                             Label="Nepieciešamās sesijas"
-                             Variant="Variant.Outlined"
-                             Margin="Margin.Dense"
-                             Min="0"
-                             For="@(() => todoTask.SessionsRequired)" />
 
             <MudNumericField T="int"
                              @bind-Value="todoTask.ProgressCurrentUnits"
-                             Label="Esošais progress"
+                             Label="@($"Izpildītie(-ās) {todoTask.ProgressUnitType}")"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
                              Min="0"
@@ -73,7 +53,7 @@
 
             <MudNumericField T="int"
                              @bind-Value="todoTask.ProgressTargetUnits"
-                             Label="Progres mērķis"
+                             Label="@($"Mērķa {todoTask.ProgressUnitType}")"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
                              Min="0"

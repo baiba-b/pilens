@@ -15,7 +15,7 @@ namespace Pilens.Data.Models
         public bool IsCompleted { get; set; } = false;
         [Required]
         [Range(int.MinValue, 3, ErrorMessage = "Vērtība nevar būt lielāka par 3.")]
-        public int Effort { get; set; } = 0;
+        public int Effort { get; set; } = 1;
         [Required]
         public DateTime Deadline { get; set; } = DateTime.Now;
         [Required]
