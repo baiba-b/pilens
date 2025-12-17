@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using System;
 using System.Timers;
 
@@ -29,6 +30,8 @@ namespace Pilens.Components.Pages
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
 
         public bool IsRunning => StartBtnPressed;
+
+       
         public void AddSessions(int sessions)
         {
             if (sessions <= 0) return;

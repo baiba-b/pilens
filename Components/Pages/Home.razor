@@ -1,10 +1,11 @@
 ﻿@page "/"
+@using Pilens.Components.Pages.todo
 <PageTitle>Home</PageTitle>
 <MudStack Direction="Row" Spacing="3">
     <ToDo @ref="toDoRef" />
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="StartAggregatedPomodoro">
-            Sākt Pomodoro vai pievienot sesijas
-        </MudButton>
+    @* <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="StartAggregatedPomodoro">
+        Sākt Pomodoro vai pievienot sesijas
+    </MudButton> *@
     <MudText Color="Color.Warning">@errorMessage</MudText>
     <Pomodoro @ref="pomodoroRef" />
 </MudStack>
