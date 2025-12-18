@@ -10,6 +10,7 @@ namespace Pilens.Components.Pages
 
         private ToDo? toDoRef;
         private Pilens.Components.Pages.Pomodoro? pomodoroRef;
+        private Pilens.Components.Pages.Console? consoleRef;
         public string errorMessage { get; set; } = string.Empty;
 
         private async Task HandleStartPomodoro(int sessions)
