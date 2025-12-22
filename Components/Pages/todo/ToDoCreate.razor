@@ -76,7 +76,12 @@
                 @($"{todoTask.ProgressCurrentUnits}/{todoTask.ProgressTargetUnits} {todoTask.ProgressUnitType}")
             </MudText>
         </MudStack>
-
+        <MudSelect T="Group" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
+            @foreach (var group in groups)
+            {
+                <MudSelectItem Value="@group">@group.Name</MudSelectItem>
+            }
+        </MudSelect>
 
 
         <MudCardActions>

@@ -21,6 +21,12 @@ namespace Pilens.Components.Pages.todo
             todoTask = new ToDoTask();
         }
 
+        List<Group> groups = new();
+        protected override async Task OnInitializedAsync()
+        {
+            groups = await Db.Groups.ToListAsync();
+        }
+        private IEnumerable<Group> selectedGroups = new HashSet<Group>();
         private async Task CreateTask()
         {
             var task = new ToDoTask
@@ -31,15 +37,20 @@ namespace Pilens.Components.Pages.todo
                 Effort = todoTask.Effort,
                 Deadline = todoTask.Deadline,
                 EffortDuration = todoTask.EffortDuration,
-                Groups = todoTask.Groups.ToList(),
+                Groups = selectedGroups.ToList(),
                 Identifier = todoTask.Identifier,
                 SessionsRequired = todoTask.SessionsRequired,
                 ProgressTargetUnits = todoTask.ProgressTargetUnits,
                 ProgressCurrentUnits = todoTask.ProgressCurrentUnits,
                 ProgressUnitType = todoTask.ProgressUnitType
             };
-
+            //var todotaskgroup = new ToDoTaskGroup
+            //{
+            //    ToDoTaskId = task.Id,
+            //    Groups = selectedGroups.id.ToList()
+            //};
             Db.ToDoTasks.Add(task);
+            //Db.ToDoTasksGroups.Add();
             await Db.SaveChangesAsync();
             Navigation.NavigateTo($"/");
             todoTask = new ToDoTask();

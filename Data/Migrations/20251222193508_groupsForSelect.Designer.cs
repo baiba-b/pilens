@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pilens.Data;
 
@@ -11,9 +12,11 @@ using Pilens.Data;
 namespace Pilens.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251222193508_groupsForSelect")]
+    partial class groupsForSelect
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,21 @@ namespace Pilens.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("GroupToDoTask", b =>
+                {
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToDoTasksId")
+                        .HasColumnType("int");
+
+                    b.HasKey("GroupsId", "ToDoTasksId");
+
+                    b.HasIndex("ToDoTasksId");
+
+                    b.ToTable("ToDoTaskGroups", (string)null);
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -301,27 +319,19 @@ namespace Pilens.Migrations
                     b.ToTable("ToDoTasks");
                 });
 
-            modelBuilder.Entity("Pilens.Data.Models.ToDoTaskGroup", b =>
+            modelBuilder.Entity("GroupToDoTask", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.HasOne("Pilens.Data.Models.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ToDoTaskId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("ToDoTaskId");
-
-                    b.ToTable("ToDoTaskGroups");
+                    b.HasOne("Pilens.Data.Models.ToDoTask", null)
+                        .WithMany()
+                        .HasForeignKey("ToDoTasksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -384,21 +394,6 @@ namespace Pilens.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Pilens.Data.Models.ToDoTaskGroup", b =>
-                {
-                    b.HasOne("Pilens.Data.Models.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Pilens.Data.Models.ToDoTask", null)
-                        .WithMany()
-                        .HasForeignKey("ToDoTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Pilens.Data.ApplicationUser", b =>
