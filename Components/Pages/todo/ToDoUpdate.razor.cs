@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using Pilens.Data;
 using Pilens.Data.Models;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Pilens.Components.Pages.todo
@@ -17,8 +19,18 @@ namespace Pilens.Components.Pages.todo
 
         private string? ErrorMessage { get; set; }
 
+        private IEnumerable<Pilens.Data.Models.Group> selectedGroups = new HashSet<Pilens.Data.Models.Group>();
+        List<Pilens.Data.Models.Group> groups = new();
+
         protected override async Task OnParametersSetAsync()
         {
+            var selectedGroups = Db.ToDoTaskGroups
+                .Include(tg => tg.Group)
+                .ThenInclude(g => g.ToDoTasks)
+                .ToList();
+
+            var groups = Db.Groups.ToListAsync();
+
             var task = await Db.ToDoTasks.FindAsync(TaskId);
             if (task == null)
             {
@@ -29,6 +41,7 @@ namespace Pilens.Components.Pages.todo
 
             ErrorMessage = null;
             todoTask = task;
+
         }
 
         private async Task UpdateTask()
@@ -41,7 +54,7 @@ namespace Pilens.Components.Pages.todo
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Unable to save changes: {ex.Message}";
+                ErrorMessage = $"Kļūda! Nevarēja sagla'bāt izmaiņas: {ex.Message}";
             }
         }
 

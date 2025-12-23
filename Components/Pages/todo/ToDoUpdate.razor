@@ -33,9 +33,13 @@
 
             </MudStack>
 
-        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTask.Deadline">
-
-        </MudDatePicker>
+        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTask.Deadline"></MudDatePicker>
+        <MudSelect T="Group" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
+            @foreach (var group in groups)
+            {
+                <MudSelectItem Value="@group">@group.Name</MudSelectItem>
+            }
+        </MudSelect>
 
 
             <MudStack Direction="Row" Spacing="2">
