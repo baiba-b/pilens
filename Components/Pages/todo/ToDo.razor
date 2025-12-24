@@ -7,6 +7,21 @@
 <MudPaper Class="mt-2 pa-3 d-inline-block">
     <MudContainer>
         <MudText>@ErrorMessage</MudText>
+
+        <MudStack Direction="Row" Spacing="2" Class="mb-4">
+            <MudTextField @bind-Value="NewGroupName"
+                          Label="Jaunas grupas nosaukums"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       Disabled="@string.IsNullOrWhiteSpace(NewGroupName)"
+                       OnClick="CreateGroupAsync">
+                Izveidot grupu
+            </MudButton>
+        </MudStack>
+
         <MudDropContainer T="ToDoTask" Items="Items" ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1">
             <ChildContent>
                 <MudGrid Spacing="4">

@@ -22,6 +22,7 @@ namespace Pilens.Components.Pages.todo
 
         private List<ToDoTask> Items { get; set; } = new();
         private string? ErrorMessage { get; set; }
+        private string NewGroupName { get; set; } = string.Empty;
 
         private int TotalSessions => Items
             .Where(task => task.Identifier == "Sesijas")
@@ -140,9 +141,40 @@ namespace Pilens.Components.Pages.todo
             await LoadTasksAsync();
         }
 
+        private async Task CreateGroupAsync()
+        {
+            var trimmedName = NewGroupName?.Trim();
+
+            if (string.IsNullOrWhiteSpace(trimmedName))
+            {
+                ErrorMessage = "Grupas nosaukums ir obligāts.";
+                return;
+            }
+
+            try
+            {
+                var exists = await Db.Groups.AnyAsync(group => group.Name == trimmedName);
+                if (exists)
+                {
+                    ErrorMessage = "Grupa ar šādu nosaukumu jau pastāv.";
+                    return;
+                }
+
+                Db.Groups.Add(new Group { Name = trimmedName });
+                await Db.SaveChangesAsync();
+
+                NewGroupName = string.Empty;
+                ErrorMessage = null;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Grupu nevarēja izveidot: {ex.Message}";
+            }
+        }
+
         private void NavigateToCreate()
         {
-             Navigation.NavigateTo($"ToDo/create");
+            Navigation.NavigateTo($"ToDo/create");
         }
     }
 }

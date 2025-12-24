@@ -20,14 +20,12 @@ namespace Pilens.Data
         {
             base.OnModelCreating(builder);
 
-       
             builder.Entity<ToDoTask>()
                 .HasMany(e => e.Groups)
                 .WithMany(e => e.ToDoTasks)
                 .UsingEntity<ToDoTaskGroup>();
 
            
-
         }
     }
 }

@@ -2,16 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Pilens.Data;
 using Pilens.Data.Models;
-using System;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Pilens.Components.Pages.todo
 {
     public partial class ToDoUpdate
     {
         [Inject]
-        private ApplicationDbContext Db { get; set; } = default;
+        private ApplicationDbContext Db { get; set; } = default!;
         [Parameter]
         public int TaskId { get; set; }
 
@@ -29,7 +26,7 @@ namespace Pilens.Components.Pages.todo
                 .ThenInclude(g => g.ToDoTasks)
                 .ToList();
 
-            var groups = Db.Groups.ToListAsync();
+            groups = await Db.Groups.ToListAsync();
 
             var task = await Db.ToDoTasks.FindAsync(TaskId);
             if (task == null)
