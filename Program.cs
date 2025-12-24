@@ -7,8 +7,6 @@ using Pilens.Data;
 using MudBlazor.Services;
 
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMudServices();
 

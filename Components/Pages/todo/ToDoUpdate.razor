@@ -1,31 +1,31 @@
 ﻿@page "/ToDo/update/{TaskId:int}"
-@inject NavigationManager Navigation
 @rendermode InteractiveServer
 @using Pilens.Data.Models
 
     <MudCardContent>
-        <EditForm method="post" Model="@todoTask" autocomplete="off" OnValidSubmit="UpdateTask">
-            <DataAnnotationsValidator />
+        @* <EditForm method="post" Model="@task" autocomplete="off" OnValidSubmit="UpdateTask"> *@
+            <MudForm>
+                @* <DataAnnotationsValidator /> *@
 
-            <MudTextField @bind-Value="todoTask.Title"
+            <MudTextField @bind-Value="task.Title"
                           Label="Nosaukums"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
-                          For="@(() => todoTask.Title)" />
-            <MudTextField @bind-Value="todoTask.Description"
+                          For="@(() => task.Title)" />
+            <MudTextField @bind-Value="task.Description"
                           Label="Apraksts"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
-                          For="@(() => todoTask.Description)" />
+                          For="@(() => task.Description)" />
 
             <MudStack Direction="Row" Spacing="2">
-                <MudTextField @bind-value="todoTask.EffortDuration"
+                <MudTextField @bind-value="task.EffortDuration"
                           Label="Nepieciešamais laiks izpildei"
                               Mask="@(new PatternMask("00:00"))"
                               Margin="Margin.Dense"
                               Variant="Variant.Outlined"
                               Placeholder="00:30" />
-                <MudTextField @bind-value="todoTask.Effort"
+                <MudTextField @bind-value="task.Effort"
                           Label="Grūtības līmenis (1-3)"
                               Margin="Margin.Dense"
                               Variant="Variant.Outlined"
@@ -33,8 +33,8 @@
 
             </MudStack>
 
-        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTask.Deadline"></MudDatePicker>
-        <MudSelect T="Group" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
+        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" task.Deadline"></MudDatePicker>
+        <MudSelect T="Group" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups" >
             @foreach (var group in groups)
             {
                 <MudSelectItem Value="@group">@group.Name</MudSelectItem>
@@ -45,36 +45,36 @@
             <MudStack Direction="Row" Spacing="2">
 
                 <MudNumericField T="int"
-                                 @bind-Value="todoTask.ProgressCurrentUnits"
-                             Label="@($"Izpildītie(-ās) {todoTask.ProgressUnitType}")"
+                                 @bind-Value="task.ProgressCurrentUnits"
+                             Label="@($"Izpildītie(-ās) {task.ProgressUnitType}")"
                                  Variant="Variant.Outlined"
                                  Margin="Margin.Dense" 
                                  Min="0"
-                                 For="@(() => todoTask.ProgressCurrentUnits)" />
+                                 For="@(() => task.ProgressCurrentUnits)" />
 
                 <MudNumericField T="int"
-                                 @bind-Value="todoTask.ProgressTargetUnits"
-                             Label="@($"Mērķa {todoTask.ProgressUnitType}")"
+                                 @bind-Value="task.ProgressTargetUnits"
+                             Label="@($"Mērķa {task.ProgressUnitType}")"
                                  Variant="Variant.Outlined"
                                  Margin="Margin.Dense"
                                  Min="0"
-                                 For="@(() => todoTask.ProgressTargetUnits)" />
+                                 For="@(() => task.ProgressTargetUnits)" />
             </MudStack>
 
-            <MudTextField @bind-Value="todoTask.ProgressUnitType"
+            <MudTextField @bind-Value="task.ProgressUnitType"
                           Label="Vienības tips"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
-                          For="@(() => todoTask.ProgressUnitType)" />
+                          For="@(() => task.ProgressUnitType)" />
 
             <MudStack Spacing="0" Class="mt-1" Style="max-width: 420px;">
                 <MudProgressLinear Color="Color.Primary"
-                                   Value="@((todoTask.ProgressTargetUnits > 0)
-                                                                                                                                                                                        ? Math.Clamp((double)todoTask.ProgressCurrentUnits / todoTask.ProgressTargetUnits * 100.0, 0, 100)
+                                   Value="@((task.ProgressTargetUnits > 0)
+                                                                                                                                                                                        ? Math.Clamp((double)task.ProgressCurrentUnits / task.ProgressTargetUnits * 100.0, 0, 100)
                                                                                                                                                                                         : 0)"
                                    Class="my-1" />
                 <MudText Typo="Typo.caption">
-                    @($"{todoTask.ProgressCurrentUnits}/{todoTask.ProgressTargetUnits} {todoTask.ProgressUnitType}")
+                    @($"{task.ProgressCurrentUnits}/{task.ProgressTargetUnits} {task.ProgressUnitType}")
                 </MudText>
             </MudStack>
 
@@ -84,11 +84,13 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Save"
                                Size="Size.Large"
                                Color="Color.Primary"
-                               ButtonType="ButtonType.Submit" />
+                           OnClick="UpdateTask" />
                 <MudIconButton Icon="@Icons.Material.Filled.Close"
                                Size="Size.Medium"
                                Color="Color.Default"
                                OnClick="Cancel" />
             </MudCardActions>
-        </EditForm>
+    </MudForm>
+
+        @* </EditForm> *@
     </MudCardContent>

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace Pilens.Data.Models;
 
 public partial class ToDoTask
@@ -17,8 +18,8 @@ public partial class ToDoTask
     public DateTime Deadline { get; set; } = DateTime.Now;
     [Required]
     public TimeSpan EffortDuration { get; set; } = TimeSpan.FromMinutes(30);
-    [Required]  
-    public ICollection<Group> Groups { get; set; } = new List<Group>();
+    [InverseProperty(nameof(ToDoTaskGroup.ToDoTask))]  
+    public ICollection<ToDoTaskGroup> ToDoTaskGroups { get; set; } = new List<ToDoTaskGroup>();
 
     public string Identifier { get; set; } = "Saraksts";
 
@@ -52,7 +53,7 @@ public partial class ToDoTask
         Effort = effort;
         Deadline = deadline;
         EffortDuration = effortDuration;
-        Groups = groups ?? new List<Group>();
+        //ToDoTaskGroups = groups ?? new List<Group>();
         Identifier = identifier ?? string.Empty;
         SessionsRequired = sessionsRequired;
         ProgressTargetUnits = progressTargetUnits;

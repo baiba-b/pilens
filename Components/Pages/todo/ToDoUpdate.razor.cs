@@ -3,61 +3,82 @@ using Microsoft.EntityFrameworkCore;
 using Pilens.Data;
 using Pilens.Data.Models;
 
-namespace Pilens.Components.Pages.todo
+namespace Pilens.Components.Pages.todo;
+
+public partial class ToDoUpdate
 {
-    public partial class ToDoUpdate
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+    [Parameter]
+    public int TaskId { get; set; }
+
+    private ToDoTask task = null!;
+
+    private string? ErrorMessage { get; set; }
+
+    // TODO: change to DTO
+    private IEnumerable<Pilens.Data.Models.Group> selectedGroups = new HashSet<Pilens.Data.Models.Group>();
+    List<Pilens.Data.Models.Group> groups = new();
+
+    protected override void OnInitialized()
     {
-        [Inject]
-        private ApplicationDbContext Db { get; set; } = default!;
-        [Parameter]
-        public int TaskId { get; set; }
 
-        private ToDoTask todoTask = new();
+        groups = Db.Groups.ToList();
 
-        private string? ErrorMessage { get; set; }
-
-        private IEnumerable<Pilens.Data.Models.Group> selectedGroups = new HashSet<Pilens.Data.Models.Group>();
-        List<Pilens.Data.Models.Group> groups = new();
-
-        protected override async Task OnParametersSetAsync()
+        var task2 = Db.ToDoTasks
+            .Include(x => x.ToDoTaskGroups)
+            .ThenInclude(x => x.Group)
+            .FirstOrDefault(x => x.Id == TaskId);
+        if (task2 == null)
         {
-            var selectedGroups = Db.ToDoTaskGroups
-                .Include(tg => tg.Group)
-                .ThenInclude(g => g.ToDoTasks)
-                .ToList();
-
-            groups = await Db.Groups.ToListAsync();
-
-            var task = await Db.ToDoTasks.FindAsync(TaskId);
-            if (task == null)
-            {
-                ErrorMessage = "Task not found.";
-                todoTask = new ToDoTask();
-                return;
-            }
-
-            ErrorMessage = null;
-            todoTask = task;
-
+            ErrorMessage = "Uzdevums netika atrasts";
+            // TODO: fix navigate to create
+            //todoTask = new ToDoTask();
+            return;
         }
+        selectedGroups = task2.ToDoTaskGroups.Select(tg => tg.Group).ToList();
+        ErrorMessage = null;
+        task = task2;
+    }
 
-        private async Task UpdateTask()
+    private async Task UpdateTask()
+    {
+        try
         {
-            try
+            var addedGroups = selectedGroups.Except(task.ToDoTaskGroups.Select(tg => tg.Group)).ToList();
+            var removedGroups = task.ToDoTaskGroups.Select(tg => tg.Group).Except(selectedGroups).ToList();
+            foreach (var group in addedGroups)
             {
-                Db.ToDoTasks.Update(todoTask);
-                await Db.SaveChangesAsync();
-                Navigation.NavigateTo("/");
+                var toDoTaskGroup = new ToDoTaskGroup
+                {
+                    ToDoTaskId = task.Id,
+                    GroupId = group.Id
+                };
+                Db.ToDoTaskGroups.Add(toDoTaskGroup);
             }
-            catch (Exception ex)
+            foreach (var group in removedGroups)
             {
-                ErrorMessage = $"Kļūda! Nevarēja sagla'bāt izmaiņas: {ex.Message}";
+                var toDoTaskGroup = await Db.ToDoTaskGroups
+                    .FirstOrDefaultAsync(tg => tg.ToDoTaskId == task.Id && tg.GroupId == group.Id);
+                if (toDoTaskGroup != null)
+                {
+                    Db.ToDoTaskGroups.Remove(toDoTaskGroup);
+                }
             }
+            Db.ToDoTasks.Update(task);
+            await Db.SaveChangesAsync();
+            Navigation.NavigateTo("/");
         }
-
-        private void Cancel()
+        catch (Exception ex)
         {
-            Navigation.NavigateTo("/ToDo");
+            ErrorMessage = $"Kļūda! Nevarēja sagla'bāt izmaiņas: {ex.Message}";
         }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/ToDo");
     }
 }

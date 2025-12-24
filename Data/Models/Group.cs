@@ -1,39 +1,18 @@
 ﻿using Mono.TextTemplating;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace Pilens.Data.Models
 
 {
-    public class Group : IEquatable<Group>
+    public class Group
     {
         [Key]
         public int Id { get; set; }
         [Required]
-        [StringLength(100, ErrorMessage = "Grupas nosaukums nevar būt garāks par 100 simboliem.")]
-        public string Name { get; set; } = "Vispārīgā";
-        public ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
+        [StringLength(100)]
+        public required string Name { get; set; } = "Vispārīgā";
+        [InverseProperty(nameof(ToDoTaskGroup.Group))]
+        public ICollection<ToDoTaskGroup> ToDoTaskGroups{ get; set; } = new List<ToDoTaskGroup>();
 
-        public Group ()
-        {
-        }
-
-      
-        public Group (string name, IEnumerable<ToDoTask>? toDoTasks)
-        {
-            Name = name ?? string.Empty;
-            ToDoTasks = toDoTasks != null ? new List<ToDoTask>(toDoTasks) : new List<ToDoTask>();
-        }
-
-        public override bool Equals(object? obj) => obj is Group group && Equals(group);
-
-        public bool Equals(Group? other)
-        {
-            if (other is null) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Name == other.Name;
-        }
-
-        public override int GetHashCode() => Name.GetHashCode();
-
-        public override string ToString() => Name;
     }
 }

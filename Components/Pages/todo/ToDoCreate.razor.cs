@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using MudBlazor;
 using Pilens.Data;
+using Pilens.Data.DTO;
 using Pilens.Data.Models;
 namespace Pilens.Components.Pages.todo
 {
@@ -21,12 +20,13 @@ namespace Pilens.Components.Pages.todo
             todoTask = new ToDoTask();
         }
 
-        List<Group> groups = new();
+        List<GroupDTO> groups = new();
         protected override async Task OnInitializedAsync()
         {
-            groups = await Db.Groups.ToListAsync();
+            var test = new Group { Name = "Test" };
+            groups = await Db.Groups.Select(g => new GroupDTO(g)).ToListAsync();
         }
-        private IEnumerable<Group> selectedGroups = new HashSet<Group>();
+        private IEnumerable<GroupDTO> selectedGroups = new HashSet<GroupDTO>();
         private async Task CreateTask()
         {
             var task = new ToDoTask
@@ -37,20 +37,24 @@ namespace Pilens.Components.Pages.todo
                 Effort = todoTask.Effort,
                 Deadline = todoTask.Deadline,
                 EffortDuration = todoTask.EffortDuration,
-                Groups = selectedGroups.ToList(),
                 Identifier = todoTask.Identifier,
                 SessionsRequired = todoTask.SessionsRequired,
                 ProgressTargetUnits = todoTask.ProgressTargetUnits,
                 ProgressCurrentUnits = todoTask.ProgressCurrentUnits,
                 ProgressUnitType = todoTask.ProgressUnitType
             };
-            //var todotaskgroup = new ToDoTaskGroup
-            //{
-            //    ToDoTaskId = task.Id,
-            //    Groups = selectedGroups.id.ToList()
-            //};
+
             Db.ToDoTasks.Add(task);
-            //Db.ToDoTasksGroups.Add();
+            await Db.SaveChangesAsync();
+            foreach (var groupDto in selectedGroups)
+            {
+                var toDoTaskGroup = new ToDoTaskGroup
+                {
+                    ToDoTaskId = task.Id,
+                    GroupId = groupDto.Id
+                };
+                Db.ToDoTaskGroups.Add(toDoTaskGroup);
+            }
             await Db.SaveChangesAsync();
             Navigation.NavigateTo($"/");
             todoTask = new ToDoTask();

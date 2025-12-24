@@ -1,6 +1,6 @@
 ﻿@page "/ToDo/create"
 @rendermode InteractiveServer
-@using Pilens.Data.Models
+@using Pilens.Data.DTO
 @using System.ComponentModel.DataAnnotations
 @inject NavigationManager Navigation
 <MudCardContent>
@@ -76,7 +76,7 @@
                 @($"{todoTask.ProgressCurrentUnits}/{todoTask.ProgressTargetUnits} {todoTask.ProgressUnitType}")
             </MudText>
         </MudStack>
-        <MudSelect T="Group" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
+        <MudSelect T="GroupDTO" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
             @foreach (var group in groups)
             {
                 <MudSelectItem Value="@group">@group.Name</MudSelectItem>

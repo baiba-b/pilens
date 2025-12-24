@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Pilens.Data.Models;
+using System.Reflection;
 
 namespace Pilens.Data
 {
@@ -19,13 +20,8 @@ namespace Pilens.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-            builder.Entity<ToDoTask>()
-                .HasMany(e => e.Groups)
-                .WithMany(e => e.ToDoTasks)
-                .UsingEntity<ToDoTaskGroup>();
-
-           
         }
     }
 }
