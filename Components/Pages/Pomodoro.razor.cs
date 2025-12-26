@@ -1,8 +1,11 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Pilens.Data;
+using Pilens.Data.DTO;
 using System;
 using System.Timers;
-using Pilens.Data.DTO;
 
 namespace Pilens.Components.Pages
 {
@@ -22,6 +25,9 @@ namespace Pilens.Components.Pages
 
         PomodoroDTO pomodoroData = new();
         private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
+
+        [Inject]
+        private ApplicationDbContext Db { get; set; } = default;
 
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
@@ -63,6 +69,7 @@ namespace Pilens.Components.Pages
             aTimer.AutoReset = true;
             aTimer.Enabled = true;
             StartBtnPressed = true;
+            
         }
 
         // Funkcija, kas sāk pauzes taimeri
@@ -226,6 +233,21 @@ namespace Pilens.Components.Pages
             isDone = false;
             StartBtnPressed = true;
             SetTimer();
+        }
+        private void SavePomodoroData(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        {
+
+            Db.Pomodoros.Add(new Data.Models.Pomodoro
+            {
+                User = pomodoroData.User,
+                Minutes = pomodoroData.Minutes,
+                PauseMinutes = pomodoroData.PauseMinutes,
+                LongPauseMinutes = pomodoroData.LongPauseMinutes,
+                SessionAmount = pomodoroData.SessionAmount,
+                SessionLongPause = pomodoroData.SessionLongPause,
+                AdjustedMin = pomodoroData.AdjustedMin
+            });
+            Db.SaveChanges();
         }
     }
 }

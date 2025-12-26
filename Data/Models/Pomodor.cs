@@ -7,7 +7,6 @@ namespace Pilens.Data.Models
     {
         [Key]
         [ForeignKey(nameof(User))]
-        public string UserID { get; set; } = string.Empty;
 
         public int DurationInMinutes { get; set; }
 
@@ -17,6 +16,8 @@ namespace Pilens.Data.Models
         public int SessionAmount { get; set; } = 4;
         public int SessionLongPause { get; set; } = 4;
         public int AdjustedMin { get; set; } = 5;
+        public string UserID { get; set; } = string.Empty;
+
         public virtual ApplicationUser User { get; set; } = null!;
 
     }

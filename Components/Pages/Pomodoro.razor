@@ -1,4 +1,8 @@
 ﻿@page "/Pomodoro"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+<AuthorizeView>
+    <Authorized>
 <MudPaper Class="mt-2 pa-2 d-inline-block" Style="max-width: 420px; width: 100%;">
      <MudContainer >
         <MudText Typo="Typo.h5" Align="Align.Center">Pomodoro</MudText>
@@ -34,7 +38,7 @@
                 <MudText Attrib="data-time-display">Atlikušais laiks: @DisplayTime</MudText>
             </MudStack>
         }
-
+        <MudButton Color="Color.Info" Variant="Variant.Outlined" Class="mt-2" @onclick="SavePomodoroData">Informācija par Pomodoro tehniku</MudButton>
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-3">
         @if (!StartBtnPressed)
@@ -66,4 +70,5 @@
             </MudStack>
     </MudContainer>
 </MudPaper>
-
+</Authorized>
+</AuthorizeView>

@@ -30,5 +30,18 @@
             SessionLongPause = sessionLongPause;
             AdjustedMin = adjustedMin;
         }
+
+        public PomodoroDTO(Data.Models.Pomodoro pomodoro)
+        {
+            User = pomodoro.User;
+            UserID = pomodoro.UserID;
+            DurationInMinutes = pomodoro.DurationInMinutes;
+            Minutes = pomodoro.Minutes;
+            PauseMinutes = pomodoro.PauseMinutes;
+            LongPauseMinutes = pomodoro.LongPauseMinutes;
+            SessionAmount = pomodoro.SessionAmount;
+            SessionLongPause = pomodoro.SessionLongPause;
+            AdjustedMin = pomodoro.AdjustedMin;
+        }
     }
 }
