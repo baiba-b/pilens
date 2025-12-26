@@ -11,37 +11,41 @@ namespace Pilens.Components.Pages.todo
         [Inject]
         private ApplicationDbContext Db { get; set; } = default;
 
-
-        private ToDoTask todoTask = new();
+        private ToDoTaskDTO todoTaskDto = new();
 
         private string? ErrorMessage { get; set; }
+
         protected override void OnInitialized()
         {
-            todoTask = new ToDoTask();
+            todoTaskDto = new ToDoTaskDTO();
         }
 
         List<GroupDTO> groups = new();
+
         protected override async Task OnInitializedAsync()
         {
-            var test = new Group { Name = "Test" };
-            groups = await Db.Groups.Select(g => new GroupDTO(g)).ToListAsync();
+            groups = await Db.Groups
+                .Select(g => new GroupDTO(g))
+                .ToListAsync();
         }
+
         private IEnumerable<GroupDTO> selectedGroups = new HashSet<GroupDTO>();
+
         private async Task CreateTask()
         {
             var task = new ToDoTask
             {
-                Title = todoTask.Title,
-                Description = todoTask.Description,
-                IsCompleted = todoTask.IsCompleted,
-                Effort = todoTask.Effort,
-                Deadline = todoTask.Deadline,
-                EffortDuration = todoTask.EffortDuration,
-                Identifier = todoTask.Identifier,
-                SessionsRequired = todoTask.SessionsRequired,
-                ProgressTargetUnits = todoTask.ProgressTargetUnits,
-                ProgressCurrentUnits = todoTask.ProgressCurrentUnits,
-                ProgressUnitType = todoTask.ProgressUnitType
+                Title = todoTaskDto.Title,
+                Description = todoTaskDto.Description,
+                IsCompleted = todoTaskDto.IsCompleted,
+                Effort = todoTaskDto.Effort,
+                Deadline = todoTaskDto.Deadline,
+                EffortDuration = todoTaskDto.EffortDuration,
+                Identifier = todoTaskDto.Identifier,
+                SessionsRequired = todoTaskDto.SessionsRequired,
+                ProgressTargetUnits = todoTaskDto.ProgressTargetUnits,
+                ProgressCurrentUnits = todoTaskDto.ProgressCurrentUnits,
+                ProgressUnitType = todoTaskDto.ProgressUnitType
             };
 
             Db.ToDoTasks.Add(task);
@@ -55,9 +59,10 @@ namespace Pilens.Components.Pages.todo
                 };
                 Db.ToDoTaskGroups.Add(toDoTaskGroup);
             }
+
             await Db.SaveChangesAsync();
-            Navigation.NavigateTo($"/");
-            todoTask = new ToDoTask();
+            Navigation.NavigateTo("/");
+            todoTaskDto = new ToDoTaskDTO();
         }
 
         private void Cancel()

@@ -11,15 +11,13 @@ namespace Pilens.Data.Models
 
         public int DurationInMinutes { get; set; }
 
+        public int Minutes { get; set; } = 25;
+        public int PauseMinutes { get; set; } = 5;
+        public int LongPauseMinutes { get; set; } = 20;
+        public int SessionAmount { get; set; } = 4;
+        public int SessionLongPause { get; set; } = 4;
+        public int AdjustedMin { get; set; } = 5;
         public virtual ApplicationUser User { get; set; } = null!;
 
-        public Pomodoro() { }
-
-        public Pomodoro(ApplicationUser user, int durationInMinutes)
-        {
-            this.User = user;
-            this.UserID = user.Id;
-            this.DurationInMinutes = durationInMinutes;
-        }
     }
 }

@@ -29,35 +29,5 @@ public partial class ToDoTask
     public int ProgressCurrentUnits { get; set; } = 0;
     public string ProgressUnitType { get; set; } = "lpp";
 
-    public ToDoTask()
-    {
-    }
-
-    public ToDoTask(
-        string title,
-        string? description,
-        bool isCompleted,
-        int effort,
-        DateTime deadline,
-        TimeSpan effortDuration,
-        ICollection<Group> groups,
-        string identifier,
-        int sessionsRequired,
-        int progressTargetUnits,
-        int progressCurrentUnits,
-        string progressUnitType)
-    {
-        Title = title ?? string.Empty;
-        Description = description;
-        IsCompleted = isCompleted;
-        Effort = effort;
-        Deadline = deadline;
-        EffortDuration = effortDuration;
-        //ToDoTaskGroups = groups ?? new List<Group>();
-        Identifier = identifier ?? string.Empty;
-        SessionsRequired = sessionsRequired;
-        ProgressTargetUnits = progressTargetUnits;
-        ProgressCurrentUnits = progressCurrentUnits;
-        ProgressUnitType = progressUnitType ?? string.Empty;
-    }
+   
 }

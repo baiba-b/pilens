@@ -9,17 +9,17 @@ public class GroupDTO : IEquatable<GroupDTO>
     [Required]
     [StringLength(100, ErrorMessage = "Grupas nosaukums nevar būt garāks par 100 simboliem.")]
     public string Name { get; set; } = "Vispārīgā";
-    public ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
+    //TODO: See if switch to ToDoTaskGroup is successful
+    public ICollection<ToDoTaskGroup> ToDoTaskGroups { get; set; } = new List<ToDoTaskGroup>();
     public GroupDTO()
     {
     }
-    public GroupDTO(string name, IEnumerable<ToDoTask>? toDoTasks)
+
+    public GroupDTO(string name, IEnumerable<ToDoTaskGroup>? toDoTasksGroup)
     {
         Name = name ?? string.Empty;
-        ToDoTasks = toDoTasks != null ? new List<ToDoTask>(toDoTasks) : new List<ToDoTask>();
+        ToDoTaskGroups = toDoTasksGroup != null ? toDoTasksGroup.ToList() : new List<ToDoTaskGroup>();
     }
-    public override bool Equals(object? obj) => obj is GroupDTO group && Equals(group);
-
     /// <summary>
     /// Konstruktors, kas pārveido entitāti uz db objektu
     /// </summary>
@@ -31,14 +31,19 @@ public class GroupDTO : IEquatable<GroupDTO>
         this.Name = group.Name;
     }
 
+    public override bool Equals(object? obj) => obj is GroupDTO group && Equals(group);
+
+   
+    
     public bool Equals(GroupDTO? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
         return Name == other.Name;
     }
-
+   
     public override int GetHashCode() => Name.GetHashCode();
 
     public override string ToString() => Name;
+
 }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System;
 using System.Timers;
+using Pilens.Data.DTO;
 
 namespace Pilens.Components.Pages
 {
@@ -9,24 +10,19 @@ namespace Pilens.Components.Pages
     {
         private static System.Timers.Timer? aTimer;
         private static System.Timers.Timer? pTimer;
-        private int InputMinutes { get; set; } = 25; 
-        private int InputPauseMinutes { get; set; } = 5;
-        private int InputLongPauseMinutes { get; set; } = 20; //vajadzēs iespēju skippot pauzi + 4 sesijai noņemt īso pauzi
-        private int InputSessionAmount { get; set; } = 4; //  (viena sesija = 1 pomodoro + pauze)
-        private int InputSessionLongPause { get; set; } = 4;
         private int RemainingSeconds { get; set; } = 0;
         private string DisplayStatus { get; set; } = "Stop";
         private string? ErrorMessage { get; set; }
         private bool StartBtnPressed { get; set; } = false;
-        private bool StopBtnPressed  { get; set; } = false;
+        private bool StopBtnPressed { get; set; } = false;
         private bool IsShortPause { get; set; } = false;
         private bool IsLongPause { get; set; } = false;
-        private int AdjustedMin { get; set; } = 5;
         private bool isDone { get; set; } = false;
-
-
         private int CurrSession { get; set; } = 0;
+
+        PomodoroDTO pomodoroData = new();
         private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
+
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
 
@@ -39,7 +35,7 @@ namespace Pilens.Components.Pages
 
             if (StartBtnPressed)
             {
-                InputSessionAmount += sessions;
+                pomodoroData.SessionAmount += sessions;
                 InvokeAsync(StateHasChanged);
             }
             else
@@ -52,7 +48,7 @@ namespace Pilens.Components.Pages
         private void SetTimer() //System.Timer funkciju implementācijas piemērs & apraksts ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
             if (aTimer != null) return;
-            RemainingSeconds = InputMinutes * 60;
+            RemainingSeconds = pomodoroData.Minutes * 60;
             ErrorMessage = string.Empty;
             if (RemainingSeconds <= 0)
             {
@@ -97,21 +93,20 @@ namespace Pilens.Components.Pages
                     aTimer = null;
                     CurrSession++;
 
-                    if (CurrSession < InputSessionAmount && CurrSession % InputSessionLongPause != 0)
+                    if (CurrSession < pomodoroData.SessionAmount && CurrSession % pomodoroData.SessionLongPause != 0)
                     {
                         IsShortPause = true;
-                        SetPause(InputPauseMinutes);
+                        SetPause(pomodoroData.PauseMinutes);
                     }
-                    else if (CurrSession < InputSessionAmount)
+                    else if (CurrSession < pomodoroData.SessionAmount)
                     {
                         IsLongPause = true;
-                        SetPause(InputLongPauseMinutes);
+                        SetPause(pomodoroData.LongPauseMinutes);
                     }
                     else
                     {                         //Restartē visu pēc visu sesiju pabeigšanas
                         
 
-                        InputMinutes = InputMinutes;
                         RemainingSeconds = 0;
                         StartBtnPressed = false;
                         StopBtnPressed = false;
@@ -162,7 +157,6 @@ namespace Pilens.Components.Pages
 
             DeactivateActivePause();
 
-            InputMinutes = InputMinutes;
             RemainingSeconds = 0;
             StartBtnPressed = false;
             StopBtnPressed = false;
@@ -214,11 +208,11 @@ namespace Pilens.Components.Pages
         {
             if (adjustType == true)
             {
-                RemainingSeconds += AdjustedMin*60;
+                RemainingSeconds += pomodoroData.AdjustedMin * 60;
             }
             else
             {
-                if (RemainingSeconds > AdjustedMin * 60) RemainingSeconds -= AdjustedMin * 60;
+                if (RemainingSeconds > pomodoroData.AdjustedMin * 60) RemainingSeconds -= pomodoroData.AdjustedMin * 60;
                 else RemainingSeconds = 0;
             }
                 
@@ -227,7 +221,7 @@ namespace Pilens.Components.Pages
  
         public void InitializeAndStartSessions(int sessions)
         {
-            InputSessionAmount = sessions;
+            pomodoroData.SessionAmount = sessions;
             CurrSession = 0;
             isDone = false;
             StartBtnPressed = true;

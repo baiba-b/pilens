@@ -13,6 +13,7 @@ namespace Pilens.Data.Models
         public required string Name { get; set; } = "Vispārīgā";
         [InverseProperty(nameof(ToDoTaskGroup.Group))]
         public ICollection<ToDoTaskGroup> ToDoTaskGroups{ get; set; } = new List<ToDoTaskGroup>();
+        public override string ToString() => Name;
 
     }
 }

@@ -4,28 +4,28 @@
 @using System.ComponentModel.DataAnnotations
 @inject NavigationManager Navigation
 <MudCardContent>
-    <EditForm method="post" Model=@todoTask autocomplete="off" OnValidSubmit="CreateTask">
+    <EditForm method="post" Model=@todoTaskDto autocomplete="off" OnValidSubmit="CreateTask">
         <DataAnnotationsValidator />
 
-        <MudTextField @bind-Value="todoTask.Title"
+        <MudTextField @bind-Value="todoTaskDto.Title"
             Label="Nosaukums"
             Variant="Variant.Outlined"
             Margin="Margin.Dense"
-            For="@(() => todoTask.Title)" />
-        <MudTextField @bind-Value="todoTask.Description" 
+            For="@(() => todoTaskDto.Title)" />
+        <MudTextField @bind-Value="todoTaskDto.Description" 
             Label="Apraksts"
             Variant="Variant.Outlined"
             Margin="Margin.Dense"
-            For="@(() => todoTask.Description)" />
+            For="@(() => todoTaskDto.Description)" />
   
         <MudStack Direction="Row" Spacing="2">
-            <MudTextField @bind-value="todoTask.EffortDuration"
+            <MudTextField @bind-value="todoTaskDto.EffortDuration"
                           Label="Nepieciešamais laiks izpildei"
                           Mask="@(new PatternMask("00:00"))"
                           Margin="Margin.Dense"
                           Variant="Variant.Outlined"
                           Placeholder="00:30" />
-            <MudTextField @bind-value="todoTask.Effort"
+            <MudTextField @bind-value="todoTaskDto.Effort"
                           Label="Grūtības līmenis (1-3)"
                           Margin="Margin.Dense"
                           Variant="Variant.Outlined"
@@ -33,7 +33,7 @@
 
         </MudStack>
 
-        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTask.Deadline">
+        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTaskDto.Deadline">
 
                       </MudDatePicker>
 
@@ -44,36 +44,36 @@
         <MudStack Direction="Row" Spacing="2">
 
             <MudNumericField T="int"
-                             @bind-Value="todoTask.ProgressCurrentUnits"
-                             Label="@($"Izpildītie(-ās) {todoTask.ProgressUnitType}")"
+                             @bind-Value="todoTaskDto.ProgressCurrentUnits"
+                             Label="@($"Izpildītie(-ās) {todoTaskDto.ProgressUnitType}")"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
                              Min="0"
-                             For="@(() => todoTask.ProgressCurrentUnits)" />
+                             For="@(() => todoTaskDto.ProgressCurrentUnits)" />
 
             <MudNumericField T="int"
-                             @bind-Value="todoTask.ProgressTargetUnits"
-                             Label="@($"Mērķa {todoTask.ProgressUnitType}")"
+                             @bind-Value="todoTaskDto.ProgressTargetUnits"
+                             Label="@($"Mērķa {todoTaskDto.ProgressUnitType}")"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
                              Min="0"
-                             For="@(() => todoTask.ProgressTargetUnits)" />
+                             For="@(() => todoTaskDto.ProgressTargetUnits)" />
         </MudStack>
 
-        <MudTextField @bind-Value="todoTask.ProgressUnitType"
+        <MudTextField @bind-Value="todoTaskDto.ProgressUnitType"
                       Label="Vienības tips"
                       Variant="Variant.Outlined"
                       Margin="Margin.Dense"
-                      For="@(() => todoTask.ProgressUnitType)" />
+                      For="@(() => todoTaskDto.ProgressUnitType)" />
 
         <MudStack Spacing="0" Class="mt-1" Style="max-width: 420px;">
             <MudProgressLinear Color="Color.Primary"
-                               Value="@((todoTask.ProgressTargetUnits > 0)
-                                                                                                                                                     ? Math.Clamp((double)todoTask.ProgressCurrentUnits / todoTask.ProgressTargetUnits * 100.0, 0, 100)
+                               Value="@((todoTaskDto.ProgressTargetUnits > 0)
+                                                                                                                                                     ? Math.Clamp((double)todoTaskDto.ProgressCurrentUnits / todoTaskDto.ProgressTargetUnits * 100.0, 0, 100)
                                                                                                                                                      : 0)"
                                Class="my-1" />
             <MudText Typo="Typo.caption">
-                @($"{todoTask.ProgressCurrentUnits}/{todoTask.ProgressTargetUnits} {todoTask.ProgressUnitType}")
+                @($"{todoTaskDto.ProgressCurrentUnits}/{todoTaskDto.ProgressTargetUnits} {todoTaskDto.ProgressUnitType}")
             </MudText>
         </MudStack>
         <MudSelect T="GroupDTO" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
@@ -83,7 +83,6 @@
             }
         </MudSelect>
        
-
 
         <MudCardActions>
             <MudIconButton Icon="@Icons.Material.Filled.AddCircle"

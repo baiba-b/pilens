@@ -7,14 +7,14 @@
         {
             <MudText Color="Color.Error">@ErrorMessage</MudText>
 
-            <MudNumericField @bind-Value="InputMinutes" Label="Sesijas ilgums" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="pomodoroData.Minutes" Label="Sesijas ilgums" Variant="Variant.Outlined" Margin="Margin.Dense" />
             
             <MudStack Row="true" Spacing="2">
-                <MudNumericField @bind-Value="InputPauseMinutes" Label="Īsā pauze" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                <MudNumericField @bind-Value="InputLongPauseMinutes" Label="Garā pauze" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                <MudNumericField @bind-Value="InputSessionAmount" Label="Sesijas" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudNumericField @bind-Value="pomodoroData.PauseMinutes" Label="Īsā pauze" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudNumericField @bind-Value="pomodoroData.LongPauseMinutes" Label="Garā pauze" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudNumericField @bind-Value="pomodoroData.SessionAmount" Label="Sesijas" Variant="Variant.Outlined" Margin="Margin.Dense" />
             </MudStack>
-            <MudNumericField @bind-Value="InputSessionLongPause" Label="Garās pauzes intervāls" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="pomodoroData.SessionLongPause" Label="Garās pauzes intervāls" Variant="Variant.Outlined" Margin="Margin.Dense" />
 
 
         }
@@ -30,7 +30,7 @@
                     <MudText>Garās pauzes laiks (～￣▽￣)～</MudText>
                 }
 
-                <MudText>Sesija @CurrSession/@InputSessionAmount</MudText>
+                <MudText>Sesija @CurrSession/@pomodoroData.SessionAmount</MudText>
                 <MudText Attrib="data-time-display">Atlikušais laiks: @DisplayTime</MudText>
             </MudStack>
         }
@@ -60,7 +60,7 @@
                 }
 
                     <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" @onclick="() => AdjustTime(false)"></MudIconButton>
-                     <MudNumericField @bind-Value="AdjustedMin" Width="25%" Label="Mainīt minūtes" Margin="Margin.Dense" Variant="Variant.Outlined"></MudNumericField>
+                <MudNumericField @bind-Value="pomodoroData.AdjustedMin" Width="25%" Label="Mainīt minūtes" Margin="Margin.Dense" Variant="Variant.Outlined"></MudNumericField>
                     <MudIconButton Icon="@Icons.Material.Filled.AddCircle" @onclick="() => AdjustTime(true)"></MudIconButton>
             }
             </MudStack>
