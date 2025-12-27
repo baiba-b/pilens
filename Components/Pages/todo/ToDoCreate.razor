@@ -3,9 +3,16 @@
 @using Pilens.Data.DTO
 @using System.ComponentModel.DataAnnotations
 @inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject ISnackbar SnackbarService
+
+
+<AuthorizeView>
+    <Authorized>
 <MudCardContent>
-    <EditForm method="post" Model=@todoTaskDto autocomplete="off" OnValidSubmit="CreateTask">
-        <DataAnnotationsValidator />
+    <MudForm Model=@todoTaskDto autocomplete="off" OnValidSubmit="CreateTask">
 
         <MudTextField @bind-Value="todoTaskDto.Title"
             Label="Nosaukums"
@@ -88,12 +95,14 @@
             <MudIconButton Icon="@Icons.Material.Filled.AddCircle"
                            Size="Size.Large"
                            Color="Color.Primary"
-                           ButtonType="ButtonType.Submit" />
+                            OnClick="CreateTask" />
             <MudIconButton Icon="@Icons.Material.Filled.Close"
                            Size="Size.Medium"
                            Color="Color.Default"
                            OnClick="Cancel" />
         </MudCardActions>
-    </EditForm>
+    </MudForm>
 </MudCardContent>
+    </Authorized>
 
+</AuthorizeView>

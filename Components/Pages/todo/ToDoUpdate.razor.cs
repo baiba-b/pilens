@@ -20,7 +20,7 @@ public partial class ToDoUpdate
     [Parameter]
     public int TaskId { get; set; }
 
-    private ToDoTask task = null!;
+    private ToDoTask? task;
 
     private string? ErrorMessage { get; set; }
 
@@ -34,6 +34,7 @@ public partial class ToDoUpdate
         {
             await using var db = await DbContextFactory.CreateDbContextAsync();
 
+
             groups = await db.Groups
                 .AsNoTracking()
                 .ToListAsync();
@@ -46,6 +47,7 @@ public partial class ToDoUpdate
             if (task2 == null)
             {
                 ErrorMessage = "Uzdevums netika atrasts";
+                task = null;
                 return;
             }
 
@@ -56,18 +58,25 @@ public partial class ToDoUpdate
         catch (Exception ex)
         {
             ErrorMessage = $"Kļūda ielādējot datus: {ex.Message}";
+            task = null;
         }
     }
 
     private async Task UpdateTask()
     {
+        if (task is null)
+        {
+            ErrorMessage = "Uzdevums netika atrasts";
+            return;
+        }
+
         try
         {
             await using var db = await DbContextFactory.CreateDbContextAsync();
 
             var dbTask = await db.ToDoTasks
                 .Include(x => x.ToDoTaskGroups)
-                .FirstOrDefaultAsync(x => x.Id == this.task.Id);
+                .FirstOrDefaultAsync(x => x.Id == task.Id);
 
             if (dbTask == null)
             {
@@ -75,17 +84,17 @@ public partial class ToDoUpdate
                 return;
             }
 
-            dbTask.Title = this.task.Title;
-            dbTask.Description = this.task.Description;
-            dbTask.IsCompleted = this.task.IsCompleted;
-            dbTask.Effort = this.task.Effort;
-            dbTask.Deadline = this.task.Deadline;
-            dbTask.EffortDuration = this.task.EffortDuration;
-            dbTask.Identifier = this.task.Identifier;
-            dbTask.SessionsRequired = this.task.SessionsRequired;
-            dbTask.ProgressTargetUnits = this.task.ProgressTargetUnits;
-            dbTask.ProgressCurrentUnits = this.task.ProgressCurrentUnits;
-            dbTask.ProgressUnitType = this.task.ProgressUnitType;
+            dbTask.Title = task.Title;
+            dbTask.Description = task.Description;
+            dbTask.IsCompleted = task.IsCompleted;
+            dbTask.Effort = task.Effort;
+            dbTask.Deadline = task.Deadline;
+            dbTask.EffortDuration = task.EffortDuration;
+            dbTask.Identifier = task.Identifier;
+            dbTask.SessionsRequired = task.SessionsRequired;
+            dbTask.ProgressTargetUnits = task.ProgressTargetUnits;
+            dbTask.ProgressCurrentUnits = task.ProgressCurrentUnits;
+            dbTask.ProgressUnitType = task.ProgressUnitType;
 
             var selectedIds = selectedGroups.Select(g => g.Id).ToHashSet();
             var existingIds = dbTask.ToDoTaskGroups.Select(tg => tg.GroupId).ToList();

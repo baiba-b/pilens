@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
 using Pilens.Data;
+using Pilens.Data.DTO;
 using Pilens.Data.Models;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace Pilens.Components.Pages.todo
         private List<ToDoTask> Items { get; set; } = new();
         private string? ErrorMessage { get; set; }
         private string NewGroupName { get; set; } = string.Empty;
+        private string userId { get; set; }
 
         private int TotalSessions => Items
             .Where(task => task.Identifier == "Sesijas")
@@ -32,6 +34,12 @@ namespace Pilens.Components.Pages.todo
 
         protected override async Task OnInitializedAsync()
         {
+            userId = await getUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return;
+            }
+          
             await LoadTasksAsync();
         }
 
@@ -39,9 +47,11 @@ namespace Pilens.Components.Pages.todo
         {
             try
             {
+               
                 await using var db = await DbContextFactory.CreateDbContextAsync();
                 Items = await db.ToDoTasks
                     .AsNoTracking()
+                    .Where(t => t.UserID == userId)
                     .OrderBy(t => t.Identifier)
                     .ThenBy(t => t.Title)
                     .ToListAsync();
@@ -175,6 +185,12 @@ namespace Pilens.Components.Pages.todo
             {
                 ErrorMessage = $"Grupu nevarēja izveidot: {ex.Message}";
             }
+        }
+        async Task<string> getUserId()
+        {
+            var user = (await _authenticationStateProvider.GetAuthenticationStateAsync()).User;
+            var UserId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
+            return UserId;
         }
 
         private void NavigateToCreate()

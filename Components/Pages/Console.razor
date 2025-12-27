@@ -1,4 +1,9 @@
 ﻿@page "/Console"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<AuthorizeView>
+    <Authorized>
 <MudCard>
     <MudCardHeader>
         <MudText Typo="Typo.h5">Konsole</MudText>
@@ -19,3 +24,5 @@
         <MudTextField @bind-Value="TextValue" Label="Outlined" Variant="Variant.Filled"></MudTextField>
     </MudStack>
 </MudCard>
+    </Authorized>
+</AuthorizeView>

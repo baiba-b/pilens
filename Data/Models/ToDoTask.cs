@@ -21,6 +21,10 @@ public partial class ToDoTask
     [InverseProperty(nameof(ToDoTaskGroup.ToDoTask))]  
     public ICollection<ToDoTaskGroup> ToDoTaskGroups { get; set; } = new List<ToDoTaskGroup>();
 
+    [Required]
+    [ForeignKey(nameof(UserID))]
+    public string UserID { get; set; } = string.Empty;
+
     public string Identifier { get; set; } = "Saraksts";
 
     public int SessionsRequired { get; set; } = 0;

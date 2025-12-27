@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor;
 using Pilens.Data;
 using Pilens.Data.DTO;
 using Pilens.Data.Models;
@@ -13,6 +15,7 @@ namespace Pilens.Components.Pages.todo
 
         private ToDoTaskDTO todoTaskDto = new();
 
+        private string userId {  get; set; }
         private string? ErrorMessage { get; set; }
 
         protected override void OnInitialized()
@@ -28,6 +31,14 @@ namespace Pilens.Components.Pages.todo
             groups = await db.Groups
                 .Select(g => new GroupDTO(g))
                 .ToListAsync();
+            var userId = await getUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                SnackbarService.Add("Neizdevās identificēt lietotāju.", Severity.Error);
+                return;
+            }
+            todoTaskDto.UserID = userId;
+
         }
 
         private IEnumerable<GroupDTO> selectedGroups = new HashSet<GroupDTO>();
@@ -48,7 +59,8 @@ namespace Pilens.Components.Pages.todo
                 SessionsRequired = todoTaskDto.SessionsRequired,
                 ProgressTargetUnits = todoTaskDto.ProgressTargetUnits,
                 ProgressCurrentUnits = todoTaskDto.ProgressCurrentUnits,
-                ProgressUnitType = todoTaskDto.ProgressUnitType
+                ProgressUnitType = todoTaskDto.ProgressUnitType,
+                UserID = todoTaskDto.UserID
             };
 
             db.ToDoTasks.Add(task);
@@ -73,5 +85,12 @@ namespace Pilens.Components.Pages.todo
         {
             Navigation.NavigateTo("/ToDo");
         }
+        async Task<string> getUserId()
+        {
+            var user = (await _authenticationStateProvider.GetAuthenticationStateAsync()).User;
+            var UserId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
+            return UserId;
+        }
+
     }
 }
