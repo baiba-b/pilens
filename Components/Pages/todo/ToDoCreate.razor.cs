@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Pilens.Data;
 using Pilens.Data.DTO;
 using Pilens.Data.Models;
+
 namespace Pilens.Components.Pages.todo
 {
-    
     public partial class ToDoCreate
     {
         [Inject]
-        private ApplicationDbContext Db { get; set; } = default;
+        private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
 
         private ToDoTaskDTO todoTaskDto = new();
 
@@ -24,7 +24,8 @@ namespace Pilens.Components.Pages.todo
 
         protected override async Task OnInitializedAsync()
         {
-            groups = await Db.Groups
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            groups = await db.Groups
                 .Select(g => new GroupDTO(g))
                 .ToListAsync();
         }
@@ -33,6 +34,8 @@ namespace Pilens.Components.Pages.todo
 
         private async Task CreateTask()
         {
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+
             var task = new ToDoTask
             {
                 Title = todoTaskDto.Title,
@@ -48,8 +51,9 @@ namespace Pilens.Components.Pages.todo
                 ProgressUnitType = todoTaskDto.ProgressUnitType
             };
 
-            Db.ToDoTasks.Add(task);
-            await Db.SaveChangesAsync();
+            db.ToDoTasks.Add(task);
+            await db.SaveChangesAsync();
+
             foreach (var groupDto in selectedGroups)
             {
                 var toDoTaskGroup = new ToDoTaskGroup
@@ -57,10 +61,10 @@ namespace Pilens.Components.Pages.todo
                     ToDoTaskId = task.Id,
                     GroupId = groupDto.Id
                 };
-                Db.ToDoTaskGroups.Add(toDoTaskGroup);
+                db.ToDoTaskGroups.Add(toDoTaskGroup);
             }
 
-            await Db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             Navigation.NavigateTo("/");
             todoTaskDto = new ToDoTaskDTO();
         }

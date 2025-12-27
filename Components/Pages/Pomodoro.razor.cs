@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using MudBlazor;
 using Pilens.Data;
 using Pilens.Data.DTO;
@@ -30,7 +28,7 @@ namespace Pilens.Components.Pages
         private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
 
         [Inject]
-        private ApplicationDbContext Db { get; set; } = default;
+        private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
 
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
@@ -45,7 +43,8 @@ namespace Pilens.Components.Pages
                 return;
             }
 
-            var existingPomodoro = await Db.Pomodoros
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var existingPomodoro = await db.Pomodoros
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.UserID == userId);
 
@@ -57,10 +56,12 @@ namespace Pilens.Components.Pages
             }
         }
 
-
         public void AddSessions(int sessions)
         {
-            if (sessions <= 0) return;
+            if (sessions <= 0)
+            {
+                return;
+            }
 
             if (StartBtnPressed)
             {
@@ -277,7 +278,8 @@ namespace Pilens.Components.Pages
 
             try
             {
-                var existingPomodoro = await Db.Pomodoros
+                await using var db = await DbContextFactory.CreateDbContextAsync();
+                var existingPomodoro = await db.Pomodoros
                     .FirstOrDefaultAsync(p => p.UserID == userId);
 
                 if (existingPomodoro is not null)
@@ -288,16 +290,12 @@ namespace Pilens.Components.Pages
                     existingPomodoro.SessionAmount = pomodoroData.SessionAmount;
                     existingPomodoro.SessionLongPause = pomodoroData.SessionLongPause;
                     existingPomodoro.AdjustedMin = pomodoroData.AdjustedMin;
-                    Db.Pomodoros.Update(existingPomodoro);
+                    db.Pomodoros.Update(existingPomodoro);
                     pomodoroData.updatePomodoro(existingPomodoro, pomodoroData);
-                    Db.SaveChanges();
-                    SnackbarService.Add("Dati saglabāti veiksmīgi!", Severity.Success);
                 }
-
-            else //izveido jaunu ierakstu
-            {
-                
-                    Db.Pomodoros.Add(new Data.Models.Pomodoro
+                else
+                {
+                    db.Pomodoros.Add(new Data.Models.Pomodoro
                     {
                         UserID = userId,
                         Minutes = pomodoroData.Minutes,
@@ -307,16 +305,15 @@ namespace Pilens.Components.Pages
                         SessionLongPause = pomodoroData.SessionLongPause,
                         AdjustedMin = pomodoroData.AdjustedMin
                     });
-                    Db.SaveChanges();
-                    SnackbarService.Add("Dati saglabāti veiksmīgi!", Severity.Success);
                 }
 
-
-             }
-         catch (Exception)
-                {
-                    SnackbarService.Add("Kļūda saglabājot datus!", Severity.Error);
-                }
+                await db.SaveChangesAsync();
+                SnackbarService.Add("Dati saglabāti veiksmīgi!", Severity.Success);
+            }
+            catch (Exception)
+            {
+                SnackbarService.Add("Kļūda saglabājot datus!", Severity.Error);
+            }
         }
     }
 }

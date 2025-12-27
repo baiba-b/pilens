@@ -15,7 +15,7 @@ namespace Pilens.Components.Pages.todo
         private const string SessionsMustBePositiveMessage = "Sesiju skaitam jābūt pozitīvam.";
 
         [Inject]
-        private ApplicationDbContext Db { get; set; } = default;
+        private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
 
         [Parameter]
         public EventCallback<int> OnStartPomodoro { get; set; }
@@ -39,7 +39,8 @@ namespace Pilens.Components.Pages.todo
         {
             try
             {
-                Items = await Db.ToDoTasks
+                await using var db = await DbContextFactory.CreateDbContextAsync();
+                Items = await db.ToDoTasks
                     .AsNoTracking()
                     .OrderBy(t => t.Identifier)
                     .ThenBy(t => t.Title)
@@ -69,7 +70,8 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
 
-            var entity = await Db.ToDoTasks.FindAsync(dropItem.Item.Id);
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var entity = await db.ToDoTasks.FindAsync(dropItem.Item.Id);
             if (entity == null)
             {
                 return;
@@ -90,7 +92,7 @@ namespace Pilens.Components.Pages.todo
                 entity.SessionsRequired = 0;
             }
 
-            await Db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             await LoadTasksAsync();
         }
 
@@ -112,14 +114,15 @@ namespace Pilens.Components.Pages.todo
 
         private async Task ToggleCompletion(ToDoTask task)
         {
-            var entity = await Db.ToDoTasks.FindAsync(task.Id);
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var entity = await db.ToDoTasks.FindAsync(task.Id);
             if (entity == null)
             {
                 return;
             }
 
-            entity.IsCompleted = !(entity.IsCompleted);
-            await Db.SaveChangesAsync();
+            entity.IsCompleted = !entity.IsCompleted;
+            await db.SaveChangesAsync();
             StateHasChanged();
         }
 
@@ -130,15 +133,15 @@ namespace Pilens.Components.Pages.todo
 
         private async Task RemoveTask(ToDoTask task)
         {
-            var entity = await Db.ToDoTasks.FindAsync(task.Id);
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var entity = await db.ToDoTasks.FindAsync(task.Id);
             if (entity == null)
             {
                 return;
             }
 
-
-            Db.ToDoTasks.Remove(entity);
-            await Db.SaveChangesAsync();
+            db.ToDoTasks.Remove(entity);
+            await db.SaveChangesAsync();
             await LoadTasksAsync();
         }
 
@@ -154,15 +157,16 @@ namespace Pilens.Components.Pages.todo
 
             try
             {
-                var exists = await Db.Groups.AnyAsync(group => group.Name == trimmedName);
+                await using var db = await DbContextFactory.CreateDbContextAsync();
+                var exists = await db.Groups.AnyAsync(group => group.Name == trimmedName);
                 if (exists)
                 {
                     ErrorMessage = "Grupa ar šādu nosaukumu jau pastāv.";
                     return;
                 }
 
-                Db.Groups.Add(new Group { Name = trimmedName });
-                await Db.SaveChangesAsync();
+                db.Groups.Add(new Group { Name = trimmedName });
+                await db.SaveChangesAsync();
 
                 NewGroupName = string.Empty;
                 ErrorMessage = null;

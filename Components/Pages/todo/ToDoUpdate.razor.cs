@@ -2,15 +2,21 @@
 using Microsoft.EntityFrameworkCore;
 using Pilens.Data;
 using Pilens.Data.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Pilens.Components.Pages.todo;
 
 public partial class ToDoUpdate
 {
     [Inject]
-    private ApplicationDbContext Db { get; set; } = default!;
+    private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
+
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
+
     [Parameter]
     public int TaskId { get; set; }
 
@@ -19,61 +25,100 @@ public partial class ToDoUpdate
     private string? ErrorMessage { get; set; }
 
     // TODO: change to DTO
-    private IEnumerable<Pilens.Data.Models.Group> selectedGroups = new HashSet<Pilens.Data.Models.Group>();
-    List<Pilens.Data.Models.Group> groups = new();
+    private IEnumerable<Group> selectedGroups = new HashSet<Group>();
+    private List<Group> groups = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-
-        groups = Db.Groups.ToList();
-
-        var task2 = Db.ToDoTasks
-            .Include(x => x.ToDoTaskGroups)
-            .ThenInclude(x => x.Group)
-            .FirstOrDefault(x => x.Id == TaskId);
-        if (task2 == null)
+        try
         {
-            ErrorMessage = "Uzdevums netika atrasts";
-            // TODO: fix navigate to create
-            //todoTask = new ToDoTask();
-            return;
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+
+            groups = await db.Groups
+                .AsNoTracking()
+                .ToListAsync();
+
+            var task2 = await db.ToDoTasks
+                .Include(x => x.ToDoTaskGroups)
+                .ThenInclude(x => x.Group)
+                .FirstOrDefaultAsync(x => x.Id == TaskId);
+
+            if (task2 == null)
+            {
+                ErrorMessage = "Uzdevums netika atrasts";
+                return;
+            }
+
+            selectedGroups = task2.ToDoTaskGroups.Select(tg => tg.Group).ToList();
+            task = task2;
+            ErrorMessage = null;
         }
-        selectedGroups = task2.ToDoTaskGroups.Select(tg => tg.Group).ToList();
-        ErrorMessage = null;
-        task = task2;
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Kļūda ielādējot datus: {ex.Message}";
+        }
     }
 
     private async Task UpdateTask()
     {
         try
         {
-            var addedGroups = selectedGroups.Except(task.ToDoTaskGroups.Select(tg => tg.Group)).ToList();
-            var removedGroups = task.ToDoTaskGroups.Select(tg => tg.Group).Except(selectedGroups).ToList();
-            foreach (var group in addedGroups)
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+
+            var dbTask = await db.ToDoTasks
+                .Include(x => x.ToDoTaskGroups)
+                .FirstOrDefaultAsync(x => x.Id == this.task.Id);
+
+            if (dbTask == null)
             {
-                var toDoTaskGroup = new ToDoTaskGroup
-                {
-                    ToDoTaskId = task.Id,
-                    GroupId = group.Id
-                };
-                Db.ToDoTaskGroups.Add(toDoTaskGroup);
+                ErrorMessage = "Uzdevums netika atrasts";
+                return;
             }
-            foreach (var group in removedGroups)
+
+            dbTask.Title = this.task.Title;
+            dbTask.Description = this.task.Description;
+            dbTask.IsCompleted = this.task.IsCompleted;
+            dbTask.Effort = this.task.Effort;
+            dbTask.Deadline = this.task.Deadline;
+            dbTask.EffortDuration = this.task.EffortDuration;
+            dbTask.Identifier = this.task.Identifier;
+            dbTask.SessionsRequired = this.task.SessionsRequired;
+            dbTask.ProgressTargetUnits = this.task.ProgressTargetUnits;
+            dbTask.ProgressCurrentUnits = this.task.ProgressCurrentUnits;
+            dbTask.ProgressUnitType = this.task.ProgressUnitType;
+
+            var selectedIds = selectedGroups.Select(g => g.Id).ToHashSet();
+            var existingIds = dbTask.ToDoTaskGroups.Select(tg => tg.GroupId).ToList();
+
+            var addedIds = selectedIds.Except(existingIds).ToList();
+            var removedIds = existingIds.Except(selectedIds).ToList();
+
+            foreach (var groupId in addedIds)
             {
-                var toDoTaskGroup = await Db.ToDoTaskGroups
-                    .FirstOrDefaultAsync(tg => tg.ToDoTaskId == task.Id && tg.GroupId == group.Id);
+                db.ToDoTaskGroups.Add(new ToDoTaskGroup
+                {
+                    ToDoTaskId = dbTask.Id,
+                    GroupId = groupId
+                });
+            }
+
+            foreach (var groupId in removedIds)
+            {
+                var toDoTaskGroup = await db.ToDoTaskGroups
+                    .FirstOrDefaultAsync(tg => tg.ToDoTaskId == dbTask.Id && tg.GroupId == groupId);
+
                 if (toDoTaskGroup != null)
                 {
-                    Db.ToDoTaskGroups.Remove(toDoTaskGroup);
+                    db.ToDoTaskGroups.Remove(toDoTaskGroup);
                 }
             }
-            Db.ToDoTasks.Update(task);
-            await Db.SaveChangesAsync();
+
+            await db.SaveChangesAsync();
             Navigation.NavigateTo("/");
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Kļūda! Nevarēja sagla'bāt izmaiņas: {ex.Message}";
+            ErrorMessage = $"Kļūda! Nevarēja saglabāt izmaiņas: {ex.Message}";
         }
     }
 
