@@ -1,0 +1,11 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inherits ComponentBase
+
+@code {
+    [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        CurrentEditContext?.Validate();
+    }
+}
