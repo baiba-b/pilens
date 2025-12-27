@@ -136,6 +136,7 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
 
+
             Db.ToDoTasks.Remove(entity);
             await Db.SaveChangesAsync();
             await LoadTasksAsync();

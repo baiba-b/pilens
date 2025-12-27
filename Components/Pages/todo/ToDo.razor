@@ -9,7 +9,7 @@
         <MudText>@ErrorMessage</MudText>
 
         <MudStack Direction="Row" Spacing="2" Class="mb-4">
-            <MudTextField @bind-Value="NewGroupName"
+            <MudTextField @bind-value="NewGroupName"
                           Label="Jaunas grupas nosaukums"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense" />
@@ -57,7 +57,7 @@
 
             <ItemRenderer>
                 <div class="d-flex flex-grow-1 gap-2 align-items-center">
-                    <MudCheckBox Class="flex-initial" @bind-Value="@context.IsCompleted" Color="Color.Primary" @onclick="@(() => ToggleCompletion(@context))" />
+                    <MudCheckBox Class="flex-initial" @bind-value="@context.IsCompleted" Color="Color.Primary" @onclick="@(() => ToggleCompletion(@context))" />
 
                     <MudStack>
                         <MudTextField Class="flex-1" @bind-Value="@context.Title" ReadOnly="true" Margin="Margin.Dense" Variant="Variant.Outlined" />

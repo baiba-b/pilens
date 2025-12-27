@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pilens.Data;
 
@@ -12,11 +11,9 @@ using Pilens.Data;
 namespace Pilens.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251104201749_pomodoro")]
-    partial class pomodoro
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,17 +220,136 @@ namespace Pilens.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Pilens.Data.Models.Group", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Groups");
+                });
+
             modelBuilder.Entity("Pilens.Data.Models.Pomodoro", b =>
                 {
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AdjustedMin")
+                        .HasColumnType("int");
 
                     b.Property<int>("DurationInMinutes")
                         .HasColumnType("int");
 
-                    b.HasKey("UserID");
+                    b.Property<int>("LongPauseMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PauseMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SessionAmount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SessionLongPause")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserID")
+                        .IsUnique();
 
                     b.ToTable("Pomodoros");
+                });
+
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Deadline")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Effort")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EffortDuration")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ProgressCurrentUnits")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProgressTargetUnits")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProgressUnitType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SessionsRequired")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ToDoTasks");
+                });
+
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTaskGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToDoTaskId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("ToDoTaskId");
+
+                    b.ToTable("ToDoTaskGroups");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -298,9 +414,38 @@ namespace Pilens.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTaskGroup", b =>
+                {
+                    b.HasOne("Pilens.Data.Models.Group", "Group")
+                        .WithMany("ToDoTaskGroups")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pilens.Data.Models.ToDoTask", "ToDoTask")
+                        .WithMany("ToDoTaskGroups")
+                        .HasForeignKey("ToDoTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("ToDoTask");
+                });
+
             modelBuilder.Entity("Pilens.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Pomodoros");
+                });
+
+            modelBuilder.Entity("Pilens.Data.Models.Group", b =>
+                {
+                    b.Navigation("ToDoTaskGroups");
+                });
+
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTask", b =>
+                {
+                    b.Navigation("ToDoTaskGroups");
                 });
 #pragma warning restore 612, 618
         }

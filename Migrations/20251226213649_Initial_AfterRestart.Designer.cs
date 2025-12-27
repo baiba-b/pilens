@@ -12,8 +12,8 @@ using Pilens.Data;
 namespace Pilens.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251222193508_groupsForSelect")]
-    partial class groupsForSelect
+    [Migration("20251226213649_Initial_AfterRestart")]
+    partial class Initial_AfterRestart
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,21 +24,6 @@ namespace Pilens.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("GroupToDoTask", b =>
-                {
-                    b.Property<int>("GroupsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ToDoTasksId")
-                        .HasColumnType("int");
-
-                    b.HasKey("GroupsId", "ToDoTasksId");
-
-                    b.HasIndex("ToDoTasksId");
-
-                    b.ToTable("ToDoTaskGroups", (string)null);
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -258,13 +243,41 @@ namespace Pilens.Migrations
 
             modelBuilder.Entity("Pilens.Data.Models.Pomodoro", b =>
                 {
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AdjustedMin")
+                        .HasColumnType("int");
 
                     b.Property<int>("DurationInMinutes")
                         .HasColumnType("int");
 
-                    b.HasKey("UserID");
+                    b.Property<int>("LongPauseMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PauseMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SessionAmount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SessionLongPause")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserID")
+                        .IsUnique();
 
                     b.ToTable("Pomodoros");
                 });
@@ -319,19 +332,27 @@ namespace Pilens.Migrations
                     b.ToTable("ToDoTasks");
                 });
 
-            modelBuilder.Entity("GroupToDoTask", b =>
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTaskGroup", b =>
                 {
-                    b.HasOne("Pilens.Data.Models.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.HasOne("Pilens.Data.Models.ToDoTask", null)
-                        .WithMany()
-                        .HasForeignKey("ToDoTasksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToDoTaskId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("ToDoTaskId");
+
+                    b.ToTable("ToDoTaskGroups");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -396,9 +417,38 @@ namespace Pilens.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTaskGroup", b =>
+                {
+                    b.HasOne("Pilens.Data.Models.Group", "Group")
+                        .WithMany("ToDoTaskGroups")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pilens.Data.Models.ToDoTask", "ToDoTask")
+                        .WithMany("ToDoTaskGroups")
+                        .HasForeignKey("ToDoTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("ToDoTask");
+                });
+
             modelBuilder.Entity("Pilens.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Pomodoros");
+                });
+
+            modelBuilder.Entity("Pilens.Data.Models.Group", b =>
+                {
+                    b.Navigation("ToDoTaskGroups");
+                });
+
+            modelBuilder.Entity("Pilens.Data.Models.ToDoTask", b =>
+                {
+                    b.Navigation("ToDoTaskGroups");
                 });
 #pragma warning restore 612, 618
         }

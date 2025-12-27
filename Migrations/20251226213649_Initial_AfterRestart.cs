@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Pilens.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateIdentitySchema : Migration
+    public partial class Initial_AfterRestart : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -48,6 +48,42 @@ namespace Pilens.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Groups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ToDoTasks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsCompleted = table.Column<bool>(type: "bit", nullable: false),
+                    Effort = table.Column<int>(type: "int", nullable: false),
+                    Deadline = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EffortDuration = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Identifier = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SessionsRequired = table.Column<int>(type: "int", nullable: false),
+                    ProgressTargetUnits = table.Column<int>(type: "int", nullable: false),
+                    ProgressCurrentUnits = table.Column<int>(type: "int", nullable: false),
+                    ProgressUnitType = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ToDoTasks", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -156,6 +192,58 @@ namespace Pilens.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Pomodoros",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DurationInMinutes = table.Column<int>(type: "int", nullable: false),
+                    Minutes = table.Column<int>(type: "int", nullable: false),
+                    PauseMinutes = table.Column<int>(type: "int", nullable: false),
+                    LongPauseMinutes = table.Column<int>(type: "int", nullable: false),
+                    SessionAmount = table.Column<int>(type: "int", nullable: false),
+                    SessionLongPause = table.Column<int>(type: "int", nullable: false),
+                    AdjustedMin = table.Column<int>(type: "int", nullable: false),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pomodoros", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Pomodoros_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ToDoTaskGroups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ToDoTaskId = table.Column<int>(type: "int", nullable: false),
+                    GroupId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ToDoTaskGroups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ToDoTaskGroups_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ToDoTaskGroups_ToDoTasks_ToDoTaskId",
+                        column: x => x.ToDoTaskId,
+                        principalTable: "ToDoTasks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -194,6 +282,22 @@ namespace Pilens.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Pomodoros_UserID",
+                table: "Pomodoros",
+                column: "UserID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ToDoTaskGroups_GroupId",
+                table: "ToDoTaskGroups",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ToDoTaskGroups_ToDoTaskId",
+                table: "ToDoTaskGroups",
+                column: "ToDoTaskId");
         }
 
         /// <inheritdoc />
@@ -215,10 +319,22 @@ namespace Pilens.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Pomodoros");
+
+            migrationBuilder.DropTable(
+                name: "ToDoTaskGroups");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Groups");
+
+            migrationBuilder.DropTable(
+                name: "ToDoTasks");
         }
     }
 }

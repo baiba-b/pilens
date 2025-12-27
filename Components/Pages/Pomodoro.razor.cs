@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using MudBlazor;
 using Pilens.Data;
 using Pilens.Data.DTO;
 using System;
 using System.Timers;
+using static MudBlazor.CategoryTypes;
 
 namespace Pilens.Components.Pages
 {
@@ -34,7 +37,27 @@ namespace Pilens.Components.Pages
 
         public bool IsRunning => StartBtnPressed;
 
-       
+        protected override async Task OnInitializedAsync()
+        {
+            var userId = await getUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return;
+            }
+
+            var existingPomodoro = await Db.Pomodoros
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.UserID == userId);
+
+            if (existingPomodoro is not null)
+            {
+                pomodoroData = new PomodoroDTO(existingPomodoro);
+                pomodoroData.UserID = userId;
+                RemainingSeconds = pomodoroData.Minutes * 60;
+            }
+        }
+
+
         public void AddSessions(int sessions)
         {
             if (sessions <= 0) return;
@@ -225,7 +248,14 @@ namespace Pilens.Components.Pages
                 
         
         }
- 
+        async Task<string> getUserId()
+        {
+            var user = (await _authenticationStateProvider.GetAuthenticationStateAsync()).User;
+            var UserId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
+            return UserId;
+        }
+
+
         public void InitializeAndStartSessions(int sessions)
         {
             pomodoroData.SessionAmount = sessions;
@@ -234,20 +264,59 @@ namespace Pilens.Components.Pages
             StartBtnPressed = true;
             SetTimer();
         }
-        private void SavePomodoroData(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+        private async Task SavePomodoroData(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
-
-            Db.Pomodoros.Add(new Data.Models.Pomodoro
+            var userId = await getUserId();
+            if (string.IsNullOrWhiteSpace(userId))
             {
-                User = pomodoroData.User,
-                Minutes = pomodoroData.Minutes,
-                PauseMinutes = pomodoroData.PauseMinutes,
-                LongPauseMinutes = pomodoroData.LongPauseMinutes,
-                SessionAmount = pomodoroData.SessionAmount,
-                SessionLongPause = pomodoroData.SessionLongPause,
-                AdjustedMin = pomodoroData.AdjustedMin
-            });
-            Db.SaveChanges();
+                SnackbarService.Add("Neizdevās identificēt lietotāju.", Severity.Error);
+                return;
+            }
+
+            pomodoroData.UserID = userId;
+
+            try
+            {
+                var existingPomodoro = await Db.Pomodoros
+                    .FirstOrDefaultAsync(p => p.UserID == userId);
+
+                if (existingPomodoro is not null)
+                {
+                    existingPomodoro.Minutes = pomodoroData.Minutes;
+                    existingPomodoro.PauseMinutes = pomodoroData.PauseMinutes;
+                    existingPomodoro.LongPauseMinutes = pomodoroData.LongPauseMinutes;
+                    existingPomodoro.SessionAmount = pomodoroData.SessionAmount;
+                    existingPomodoro.SessionLongPause = pomodoroData.SessionLongPause;
+                    existingPomodoro.AdjustedMin = pomodoroData.AdjustedMin;
+                    Db.Pomodoros.Update(existingPomodoro);
+                    pomodoroData.updatePomodoro(existingPomodoro, pomodoroData);
+                    Db.SaveChanges();
+                    SnackbarService.Add("Dati saglabāti veiksmīgi!", Severity.Success);
+                }
+
+            else //izveido jaunu ierakstu
+            {
+                
+                    Db.Pomodoros.Add(new Data.Models.Pomodoro
+                    {
+                        UserID = userId,
+                        Minutes = pomodoroData.Minutes,
+                        PauseMinutes = pomodoroData.PauseMinutes,
+                        LongPauseMinutes = pomodoroData.LongPauseMinutes,
+                        SessionAmount = pomodoroData.SessionAmount,
+                        SessionLongPause = pomodoroData.SessionLongPause,
+                        AdjustedMin = pomodoroData.AdjustedMin
+                    });
+                    Db.SaveChanges();
+                    SnackbarService.Add("Dati saglabāti veiksmīgi!", Severity.Success);
+                }
+
+
+             }
+         catch (Exception)
+                {
+                    SnackbarService.Add("Kļūda saglabājot datus!", Severity.Error);
+                }
         }
     }
 }
