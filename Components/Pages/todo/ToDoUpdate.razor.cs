@@ -150,7 +150,7 @@ public partial class ToDoUpdate
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/ToDo");
+        Navigation.NavigateTo("/");
     }
 
     private string TitleValidation(string? value)
