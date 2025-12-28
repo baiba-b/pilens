@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor;
 using Pilens.Data;
 using Pilens.Data.Models;
 using System;
@@ -17,12 +18,17 @@ public partial class ToDoUpdate
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
 
+   
+
     [Parameter]
     public int TaskId { get; set; }
 
     private ToDoTask? task;
 
     private string? ErrorMessage { get; set; }
+    private string? ToDoTaskReqError { get; set; } = "Šis atribūts ir obligāts!";
+    private MudForm? todoForm;
+    private bool _formIsValid = true;
 
     // TODO: change to DTO
     private IEnumerable<Group> selectedGroups = new HashSet<Group>();
@@ -61,12 +67,23 @@ public partial class ToDoUpdate
             task = null;
         }
     }
+
     private async Task UpdateTask()
     {
         if (task is null)
         {
             ErrorMessage = "Uzdevums netika atrasts";
             return;
+        }
+
+        if (todoForm is not null)
+        {
+            await todoForm.Validate();
+            if (!todoForm.IsValid)
+            {
+                SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas.", Severity.Error);
+                return;
+            }
         }
 
         try
@@ -127,10 +144,81 @@ public partial class ToDoUpdate
         catch (Exception ex)
         {
             ErrorMessage = $"Kļūda! Nevarēja saglabāt izmaiņas: {ex.Message}";
+            SnackbarService.Add(ErrorMessage, Severity.Error);
         }
     }
+
     private void Cancel()
     {
         Navigation.NavigateTo("/ToDo");
+    }
+
+    private string TitleValidation(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Lūdzu, ievadi uzdevuma nosaukumu.";
+        var len = value.Trim().Length;
+        if (len < 1 || len > 200)
+            return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam.";
+        return string.Empty;
+    }
+
+    private string DescriptionValidation(string? value)
+    {
+        if (value is null)
+            return string.Empty;
+        var trimmed = value.Trim();
+        if (trimmed.Length > 500)
+            return "Apraksts nevar būt garāks par 500 simboliem.";
+        return string.Empty;
+    }
+
+    private string DeadlineValidation(DateTime value)
+    {
+        var today = DateTime.Today;
+        if (value.Date < today)
+            return "Datums nevar būt pagātnē.";
+        return string.Empty;
+    }
+
+    private string EffortValidation(int value)
+    {
+        if (value < 1 || value > 3)
+            return "Grūtības līmenim jābūt no 1 līdz 3.";
+        return string.Empty;
+    }
+
+    private string EffortDurationValidation(TimeSpan value)
+    {
+        if (value <= TimeSpan.Zero)
+            return "Pieprasītais laiks ir obligāts un tam jābūt pozitīvam (HH:MM).";
+        if (value >= TimeSpan.FromHours(24))
+            return "Laiks jābūt 24-stundu formātā (HH:MM).";
+        return string.Empty;
+    }
+
+    private string ProgressTargetValidation(int value)
+    {
+        if (value < 0)
+            return "Progresa mērķa vienībām jābūt pozitīvam skaitlim.";
+        return string.Empty;
+    }
+
+    private string ProgressCurrentValidation(int value)
+    {
+        if (value < 0)
+            return "Progresa esošajām vienībām jābūt pozitīvam skaitlim.";
+        if (task is not null && task.ProgressTargetUnits >= 0 && value > task.ProgressTargetUnits)
+            return "Esošās vienības nevar pārsniegt mērķa vienības.";
+        return string.Empty;
+    }
+
+    private string ProgressUnitTypeValidation(string? value)
+    {
+        if (value is null)
+            return string.Empty;
+        if (value.Trim().Length == 0)
+            return "Vienības tips nevar sastāvēt tikai no atstarpēm.";
+        return string.Empty;
     }
 }
