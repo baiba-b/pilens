@@ -209,6 +209,14 @@ namespace Pilens.Components.Pages.todo
                     return;
                 }
 
+                var connections = await db.ToDoTaskGroups
+                    .Where(connection => connection.ToDoTaskId == entity.Id)
+                    .ToListAsync();
+                if (connections.Count > 0)
+                {
+                    db.ToDoTaskGroups.RemoveRange(connections);
+                }
+
                 db.ToDoTasks.Remove(entity);
                 await db.SaveChangesAsync();
                 await LoadTasksAsync();
@@ -216,7 +224,7 @@ namespace Pilens.Components.Pages.todo
             }
             catch (Exception)
             {
-                string errorMessage = "Uzdevums netika atrasts!";
+                string errorMessage = "Uzdevumu neizdevās izdzēst!";
                 SnackbarService.Add(errorMessage, Severity.Error);
                 return;
             }
