@@ -5,6 +5,7 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
+@inject ISnackbar SnackbarService
 @inject AuthenticationStateProvider _authenticationStateProvider
 
 <AuthorizeView>

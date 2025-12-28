@@ -61,7 +61,6 @@ public partial class ToDoUpdate
             task = null;
         }
     }
-
     private async Task UpdateTask()
     {
         if (task is null)
@@ -130,7 +129,6 @@ public partial class ToDoUpdate
             ErrorMessage = $"Kļūda! Nevarēja saglabāt izmaiņas: {ex.Message}";
         }
     }
-
     private void Cancel()
     {
         Navigation.NavigateTo("/ToDo");

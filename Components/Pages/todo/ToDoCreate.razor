@@ -18,7 +18,8 @@
             Label="Nosaukums"
             Variant="Variant.Outlined"
             Margin="Margin.Dense"
-            For="@(() => todoTaskDto.Title)" />
+            For="@(() => todoTaskDto.Title)" 
+            />
         <MudTextField @bind-Value="todoTaskDto.Description" 
             Label="Apraksts"
             Variant="Variant.Outlined"
@@ -31,7 +32,9 @@
                           Mask="@(new PatternMask("00:00"))"
                           Margin="Margin.Dense"
                           Variant="Variant.Outlined"
-                          Placeholder="00:30" />
+                          Placeholder="00:30"
+                          
+                          />
             <MudTextField @bind-value="todoTaskDto.Effort"
                           Label="Grūtības līmenis (1-3)"
                           Margin="Margin.Dense"
@@ -75,9 +78,7 @@
 
         <MudStack Spacing="0" Class="mt-1" Style="max-width: 420px;">
             <MudProgressLinear Color="Color.Primary"
-                               Value="@((todoTaskDto.ProgressTargetUnits > 0)
-                                                                                                                                                     ? Math.Clamp((double)todoTaskDto.ProgressCurrentUnits / todoTaskDto.ProgressTargetUnits * 100.0, 0, 100)
-                                                                                                                                                     : 0)"
+                               Value="@((todoTaskDto.ProgressTargetUnits > 0)? Math.Clamp((double)todoTaskDto.ProgressCurrentUnits / todoTaskDto.ProgressTargetUnits * 100.0, 0, 100) : 0)"
                                Class="my-1" />
             <MudText Typo="Typo.caption">
                 @($"{todoTaskDto.ProgressCurrentUnits}/{todoTaskDto.ProgressTargetUnits} {todoTaskDto.ProgressUnitType}")

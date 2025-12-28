@@ -7,12 +7,12 @@ public partial class ToDoTask
     [Key]
     public int Id { get; set; }
     [Required]
-    [StringLength(200, ErrorMessage = "Nosaukums nevar būt garāks par 200 simboliem.")]
+    [StringLength(200)]
     public string Title { get; set; } 
     public string? Description { get; set; } = string.Empty;
     public bool IsCompleted { get; set; } = false;
     [Required]
-    [Range(int.MinValue, 3, ErrorMessage = "Vērtība nevar būt lielāka par 3.")]
+    [Range(int.MinValue, 3)]
     public int Effort { get; set; } = 1;
     [Required]
     public DateTime Deadline { get; set; } = DateTime.Now;

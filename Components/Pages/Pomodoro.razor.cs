@@ -59,8 +59,6 @@ namespace Pilens.Components.Pages
             var userId = await getUserId();
             if (userId == null)
             {
-                string errorMessage = "Neizdevās identificēt lietotāju.";
-                SnackbarService.Add(errorMessage, Severity.Error);
                 return;
             }
 
@@ -93,7 +91,7 @@ namespace Pilens.Components.Pages
             await pomodoroForm.Validate();
             if (pomodoroForm.IsValid == false)
             {
-                SnackbarService.Add("Lūdzu, labojiet veidlapas kļūdas pirms sākat Pomodoro taimeri.", Severity.Error);
+                SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas.", Severity.Error);
                 return;
             }
             string errorMessage = string.Empty; ;
