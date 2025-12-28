@@ -52,7 +52,7 @@ public partial class ToDoUpdate
 
             if (task2 == null)
             {
-                ErrorMessage = "Uzdevums netika atrasts";
+                ErrorMessage = "Uzdevums netika atrasts!";
                 task = null;
                 return;
             }
@@ -63,7 +63,7 @@ public partial class ToDoUpdate
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Kļūda ielādējot datus: {ex.Message}";
+            ErrorMessage = "Neizdevās ielādēt grupas!";
             task = null;
         }
     }
@@ -72,7 +72,7 @@ public partial class ToDoUpdate
     {
         if (task is null)
         {
-            ErrorMessage = "Uzdevums netika atrasts";
+            ErrorMessage = "Uzdevums netika atrasts!";
             return;
         }
 
@@ -96,7 +96,7 @@ public partial class ToDoUpdate
 
             if (dbTask == null)
             {
-                ErrorMessage = "Uzdevums netika atrasts";
+                ErrorMessage = "Uzdevums netika atrasts!";
                 return;
             }
 
@@ -143,7 +143,7 @@ public partial class ToDoUpdate
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Kļūda! Nevarēja saglabāt izmaiņas: {ex.Message}";
+            ErrorMessage = "Kļūda! Nevarēja saglabāt izmaiņas!";
             SnackbarService.Add(ErrorMessage, Severity.Error);
         }
     }
@@ -155,11 +155,9 @@ public partial class ToDoUpdate
 
     private string TitleValidation(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return "Lūdzu, ievadi uzdevuma nosaukumu.";
         var len = value.Trim().Length;
         if (len < 1 || len > 200)
-            return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam.";
+            return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";
         return string.Empty;
     }
 
@@ -169,7 +167,7 @@ public partial class ToDoUpdate
             return string.Empty;
         var trimmed = value.Trim();
         if (trimmed.Length > 500)
-            return "Apraksts nevar būt garāks par 500 simboliem.";
+            return "Apraksts nevar būt garāks par 500 simboliem!";
         return string.Empty;
     }
 
@@ -184,16 +182,14 @@ public partial class ToDoUpdate
     private string EffortValidation(int value)
     {
         if (value < 1 || value > 3)
-            return "Grūtības līmenim jābūt no 1 līdz 3.";
+            return "Grūtības pakāpei jābūt no 1 līdz 3.";
         return string.Empty;
     }
 
     private string EffortDurationValidation(TimeSpan value)
     {
-        if (value <= TimeSpan.Zero)
-            return "Pieprasītais laiks ir obligāts un tam jābūt pozitīvam (HH:MM).";
         if (value >= TimeSpan.FromHours(24))
-            return "Laiks jābūt 24-stundu formātā (HH:MM).";
+            return "Laikam jābūt 24-stundu formātā (HH:MM).";
         return string.Empty;
     }
 
@@ -217,8 +213,8 @@ public partial class ToDoUpdate
     {
         if (value is null)
             return string.Empty;
-        if (value.Trim().Length == 0)
-            return "Vienības tips nevar sastāvēt tikai no atstarpēm.";
+        if (value.Trim().Length > 100)
+            return "Vienības tips nevar būt garāks par 100 simboliem.";
         return string.Empty;
     }
 }

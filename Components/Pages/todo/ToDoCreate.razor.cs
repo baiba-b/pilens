@@ -42,7 +42,7 @@ public partial class ToDoCreate
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Neizdevās ielādēt grupas: " + ex.Message;
+            ErrorMessage = "Neizdevās ielādēt grupas!";
             SnackbarService.Add(ErrorMessage, Severity.Error);
         }
     }
@@ -56,7 +56,7 @@ public partial class ToDoCreate
             await todoForm.Validate();
             if (!todoForm.IsValid)
             {
-                SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas.", Severity.Error);
+                SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas!", Severity.Error);
                 return;
             }
         }
@@ -95,12 +95,15 @@ public partial class ToDoCreate
             }
 
             await db.SaveChangesAsync();
+
+            SnackbarService.Add("Uzdevums veiksmīgi izveidots!", Severity.Success);
+
             Navigation.NavigateTo("/");
             todoTaskDto = new ToDoTaskDTO();
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Neizdevās izveidot uzdevumu: " + ex.Message;
+            ErrorMessage = "Neizdevās izveidot uzdevumu!";
             SnackbarService.Add(ErrorMessage, Severity.Error);
         }
     }
@@ -125,11 +128,9 @@ public partial class ToDoCreate
 
     private string TitleValidation(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return "Lūdzu, ievadi uzdevuma nosaukumu.";
         var len = value.Trim().Length;
         if (len < 1 || len > 200)
-            return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam.";
+            return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";
         return string.Empty;
     }
 
@@ -139,7 +140,7 @@ public partial class ToDoCreate
             return string.Empty;
         var trimmed = value.Trim();
         if (trimmed.Length > 500)
-            return "Apraksts nevar būt garāks par 500 simboliem.";
+            return "Apraksts nevar būt garāks par 500 simboliem!";
         return string.Empty;
     }
 
@@ -151,25 +152,20 @@ public partial class ToDoCreate
         return string.Empty;
     }
 
-    // Effort: 1–3
     private string EffortValidation(int value)
     {
         if (value < 1 || value > 3)
-            return "Grūtības līmenim jābūt no 1 līdz 3.";
+            return "Grūtības pakāpei jābūt no 1 līdz 3.";
         return string.Empty;
     }
 
-    // EffortDuration: HH:MM, must be positive and within 24h mask
     private string EffortDurationValidation(TimeSpan value)
     {
-        if (value <= TimeSpan.Zero)
-            return "Pieprasītais laiks ir obligāts un tam jābūt pozitīvam (HH:MM).";
         if (value >= TimeSpan.FromHours(24))
-            return "Laiks jābūt 24-stundu formātā (HH:MM).";
+            return "Laikam jābūt 24-stundu formātā (HH:MM).";
         return string.Empty;
     }
 
-    // Progress target: optional, positive (>= 0)
     private string ProgressTargetValidation(int value)
     {
         if (value < 0)
@@ -177,7 +173,6 @@ public partial class ToDoCreate
         return string.Empty;
     }
 
-    // Progress current: optional, positive (>= 0), not exceeding target
     private string ProgressCurrentValidation(int value)
     {
         if (value < 0)
@@ -187,14 +182,12 @@ public partial class ToDoCreate
         return string.Empty;
     }
 
-    // Progress unit type: optional
     private string ProgressUnitTypeValidation(string? value)
     {
-        // Optional; reject whitespace-only if provided
         if (value is null)
             return string.Empty;
-        if (value.Trim().Length == 0)
-            return "Vienības tips nevar sastāvēt tikai no atstarpēm.";
+        if (value.Trim().Length > 100)
+            return "Vienības tips nevar būt garāks par 100 simboliem.";
         return string.Empty;
     }
 }

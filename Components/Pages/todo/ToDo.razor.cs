@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Pilens.Components.Shared;
 
 namespace Pilens.Components.Pages.todo
 {
@@ -17,6 +18,9 @@ namespace Pilens.Components.Pages.todo
 
         [Inject]
         private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
+
+        [Inject]
+        private IDialogService DialogService { get; set; } = default!;
 
         [Parameter]
         public EventCallback<int> OnStartPomodoro { get; set; }
@@ -164,25 +168,55 @@ namespace Pilens.Components.Pages.todo
         {
             Navigation.NavigateTo($"/ToDo/update/{task.Id}");
         }
+        /// <summary>
+        /// UMF_003 – Izdzēst uzdevumu
+        /// Ļauj reģistrētam lietotājam dzēst uzdevumu ar apstiprinājuma dialogu.
+        /// </summary>
+        /// <param name="task">Dzēšamais uzdevums</param>
         private async Task RemoveTask(ToDoTask task)
         {
+            var parameters = new DialogParameters<ConfirmDeleteDialog>
+            {
+                { x => x.ContentText, $"Vai esi pārliecināts, ka vēlies dzēst \"{task.Title}\"?" },
+                { x => x.ButtonText, "Dzēst" },
+                { x => x.Color, Color.Error }
+            };
+
+            var options = new DialogOptions
+            {
+                CloseButton = true,
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            };
+
+
+            var dialogRef = await DialogService.ShowAsync<ConfirmDeleteDialog>("Dzēst uzdevumu", parameters, options);
+            var dialogResult = await dialogRef.Result;
+
+            if (dialogResult.Canceled)
+            {
+                return;
+            }
+
             try
             {
                 await using var db = await DbContextFactory.CreateDbContextAsync();
                 var entity = await db.ToDoTasks.FindAsync(task.Id);
                 if (entity == null)
                 {
-                    string errorMessage = "Neizdevās atrast uzdevumu!";
+                    string errorMessage = "Uzdevums netika atrasts!";
                     SnackbarService.Add(errorMessage, Severity.Error);
+                    return;
                 }
 
                 db.ToDoTasks.Remove(entity);
                 await db.SaveChangesAsync();
                 await LoadTasksAsync();
+                SnackbarService.Add("Uzdevums veiksmīgi izdzēsts!", Severity.Success);
             }
             catch (Exception)
             {
-                string errorMessage = "Neizdevās izdzēst uzdevumu!";
+                string errorMessage = "Uzdevums netika atrasts!";
                 SnackbarService.Add(errorMessage, Severity.Error);
                 return;
             }
