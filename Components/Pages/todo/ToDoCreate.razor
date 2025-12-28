@@ -8,102 +8,123 @@
 @inject AuthenticationStateProvider _authenticationStateProvider
 @inject ISnackbar SnackbarService
 
-
 <AuthorizeView>
     <Authorized>
-<MudCardContent>
-    <MudForm Model=@todoTaskDto autocomplete="off" OnValidSubmit="CreateTask">
+        <MudCardContent>
+            <MudForm @bind-IsValid="_formIsValid" @ref="todoForm" autocomplete="off" OnValidSubmit="CreateTask">
+                <MudTextField @bind-Value="todoTaskDto.Title"
+                              Label="Nosaukums"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Required="true"
+                              RequiredError="@ToDoTaskReqError"
+                              MaxLength="200"
+                              Validation="@(new Func<string, string>(TitleValidation))" />
 
-        <MudTextField @bind-Value="todoTaskDto.Title"
-            Label="Nosaukums"
-            Variant="Variant.Outlined"
-            Margin="Margin.Dense"
-            For="@(() => todoTaskDto.Title)" 
-            />
-        <MudTextField @bind-Value="todoTaskDto.Description" 
-            Label="Apraksts"
-            Variant="Variant.Outlined"
-            Margin="Margin.Dense"
-            For="@(() => todoTaskDto.Description)" />
-  
-        <MudStack Direction="Row" Spacing="2">
-            <MudTextField @bind-value="todoTaskDto.EffortDuration"
-                          Label="Nepieciešamais laiks izpildei"
-                          Mask="@(new PatternMask("00:00"))"
-                          Margin="Margin.Dense"
-                          Variant="Variant.Outlined"
-                          Placeholder="00:30"
-                          
-                          />
-            <MudTextField @bind-value="todoTaskDto.Effort"
-                          Label="Grūtības līmenis (1-3)"
-                          Margin="Margin.Dense"
-                          Variant="Variant.Outlined"
-                          Placeholder="0" />
+                <MudTextField @bind-Value="todoTaskDto.Description"
+                              Label="Apraksts"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Lines="3"
+                              MaxLength="500"
+                              Validation="@(new Func<string, string>(DescriptionValidation))" />
 
-        </MudStack>
+                <MudStack Direction="Row" Spacing="2">
+                    <!-- Pieprasītais laiks – HH:MM -->
+                    <MudTextField @bind-Value="todoTaskDto.EffortDuration"
+                                  Label="Nepieciešamais laiks izpildei (HH:MM)"
+                                  Mask="@(new PatternMask("00:00"))"
+                                  Margin="Margin.Dense"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="00:30"
+                                  Required="true"
+                                  RequiredError="@ToDoTaskReqError"
+                                  Validation="@(new Func<TimeSpan, string>(EffortDurationValidation))" />
 
-        <MudDatePicker Label="Uzdevuma termiņš" @bind-value=" todoTaskDto.Deadline">
+                    <!-- Grūtības līmenis (1–3) -->
+                    <MudNumericField T="int"
+                                     @bind-Value="todoTaskDto.Effort"
+                                     Label="Grūtības līmenis (1–3)"
+                                     Margin="Margin.Dense"
+                                     Variant="Variant.Outlined"
+                                     Placeholder="1"
+                                     Required="true"
+                                     RequiredError="@ToDoTaskReqError"
+                                     Min="1"
+                                     Max="3"
+                                     Validation="@(new Func<int, string>(EffortValidation))" />
+                </MudStack>
 
-                      </MudDatePicker>
+                <!-- Datums  -->
+                <MudDatePicker Label="Uzdevuma termiņš"
+                               @bind-value="todoTaskDto.Deadline"
+                               Required="true"
+                               RequiredError="@ToDoTaskReqError"
+                              
+                               Validation="@(new Func<DateTime, string>(DeadlineValidation))" />
 
-        <MudStack Direction="Row" AlignItems=AlignItems.Center Spacing="1">
-   
-        </MudStack>
+                <MudStack Direction="Row" Spacing="2">
+                    <!-- Progresa esošās vienības: pozitīvs skaitlis -->
+                    <MudNumericField T="int"
+                                     @bind-Value="todoTaskDto.ProgressCurrentUnits"
+                                     Label="@($"Izpildītie(-ās) {todoTaskDto.ProgressUnitType}")"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Min="0"
+                                     Validation="@(new Func<int, string>(ProgressCurrentValidation))" />
 
-        <MudStack Direction="Row" Spacing="2">
+                    <!-- Progresa mērķa vienības: pozitīvs skaitlis -->
+                    <MudNumericField T="int"
+                                     @bind-Value="todoTaskDto.ProgressTargetUnits"
+                                     Label="@($"Mērķa {todoTaskDto.ProgressUnitType}")"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Min="0"
+                                     Validation="@(new Func<int, string>(ProgressTargetValidation))" />
+                </MudStack>
 
-            <MudNumericField T="int"
-                             @bind-Value="todoTaskDto.ProgressCurrentUnits"
-                             Label="@($"Izpildītie(-ās) {todoTaskDto.ProgressUnitType}")"
-                             Variant="Variant.Outlined"
-                             Margin="Margin.Dense"
-                             Min="0"
-                             For="@(() => todoTaskDto.ProgressCurrentUnits)" />
+                <!-- Vienības tips  -->
+                <MudTextField @bind-Value="todoTaskDto.ProgressUnitType"
+                              Label="Vienības tips"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Validation="@(new Func<string, string>(ProgressUnitTypeValidation))" />
 
-            <MudNumericField T="int"
-                             @bind-Value="todoTaskDto.ProgressTargetUnits"
-                             Label="@($"Mērķa {todoTaskDto.ProgressUnitType}")"
-                             Variant="Variant.Outlined"
-                             Margin="Margin.Dense"
-                             Min="0"
-                             For="@(() => todoTaskDto.ProgressTargetUnits)" />
-        </MudStack>
+                <!-- Grupa: 0..n -->
+                <MudSelect T="GroupDTO" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
+                    @foreach (var group in groups)
+                    {
+                        <MudSelectItem Value="@group">@group.Name</MudSelectItem>
+                    }
+                </MudSelect>
 
-        <MudTextField @bind-Value="todoTaskDto.ProgressUnitType"
-                      Label="Vienības tips"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      For="@(() => todoTaskDto.ProgressUnitType)" />
+                <MudStack Spacing="0" Class="mt-1" Style="max-width: 420px;">
+                    <MudProgressLinear Color="Color.Primary"
+                                       Value="@((todoTaskDto.ProgressTargetUnits > 0)? Math.Clamp((double)todoTaskDto.ProgressCurrentUnits / todoTaskDto.ProgressTargetUnits * 100.0, 0, 100) : 0)"
+                                       Class="my-1" />
+                    <MudText Typo="Typo.caption">
+                        @($"{todoTaskDto.ProgressCurrentUnits}/{todoTaskDto.ProgressTargetUnits} {todoTaskDto.ProgressUnitType}")
+                    </MudText>
+                </MudStack>
 
-        <MudStack Spacing="0" Class="mt-1" Style="max-width: 420px;">
-            <MudProgressLinear Color="Color.Primary"
-                               Value="@((todoTaskDto.ProgressTargetUnits > 0)? Math.Clamp((double)todoTaskDto.ProgressCurrentUnits / todoTaskDto.ProgressTargetUnits * 100.0, 0, 100) : 0)"
-                               Class="my-1" />
-            <MudText Typo="Typo.caption">
-                @($"{todoTaskDto.ProgressCurrentUnits}/{todoTaskDto.ProgressTargetUnits} {todoTaskDto.ProgressUnitType}")
-            </MudText>
-        </MudStack>
-        <MudSelect T="GroupDTO" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
-            @foreach (var group in groups)
-            {
-                <MudSelectItem Value="@group">@group.Name</MudSelectItem>
-            }
-        </MudSelect>
-       
+                <MudSelect T="GroupDTO" Label="Grupas" MultiSelection="true" @bind-SelectedValues="selectedGroups">
+                    @foreach (var group in groups)
+                    {
+                        <MudSelectItem Value="@group">@group.Name</MudSelectItem>
+                    }
+                </MudSelect>
 
-        <MudCardActions>
-            <MudIconButton Icon="@Icons.Material.Filled.AddCircle"
-                           Size="Size.Large"
-                           Color="Color.Primary"
-                            OnClick="CreateTask" />
-            <MudIconButton Icon="@Icons.Material.Filled.Close"
-                           Size="Size.Medium"
-                           Color="Color.Default"
-                           OnClick="Cancel" />
-        </MudCardActions>
-    </MudForm>
-</MudCardContent>
+                <MudCardActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.AddCircle"
+                                   Size="Size.Large"
+                                   Color="Color.Primary"
+                                   OnClick="CreateTask" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                   Size="Size.Medium"
+                                   Color="Color.Default"
+                                   OnClick="Cancel" />
+                </MudCardActions>
+            </MudForm>
+        </MudCardContent>
     </Authorized>
-
 </AuthorizeView>
