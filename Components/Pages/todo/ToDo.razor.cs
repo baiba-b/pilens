@@ -163,10 +163,58 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
         }
+
           
         private void StartEdit(ToDoTask task)
         {
             Navigation.NavigateTo($"/ToDo/update/{task.Id}");
+        }
+
+        private bool CanIncreaseProgress(ToDoTask task)
+        {
+            return task?.ProgressTargetUnits > 0 && task.ProgressCurrentUnits < task.ProgressTargetUnits;
+        }
+
+        private bool CanDecreaseProgress(ToDoTask task)
+        {
+            return task?.ProgressTargetUnits > 0 && task.ProgressCurrentUnits > 0;
+        }
+
+        private async Task ChangeProgressAsync(ToDoTask task, int changeAmount)
+        {
+            if (task == null || task.ProgressTargetUnits <= 0 || changeAmount == 0)
+            {
+                return;
+            }
+
+            var newValue = Math.Clamp(task.ProgressCurrentUnits + changeAmount, 0, task.ProgressTargetUnits);
+            if (newValue == task.ProgressCurrentUnits)
+            {
+                return;
+            }
+
+            try
+            {
+                await using var db = await DbContextFactory.CreateDbContextAsync();
+                var entity = await db.ToDoTasks.FindAsync(task.Id);
+                if (entity == null)
+                {
+                    string errorMessage = "Neizdevās atrast uzdevumu!";
+                    SnackbarService.Add(errorMessage, Severity.Error);
+                    return;
+                }
+
+                entity.ProgressCurrentUnits = newValue;
+                await db.SaveChangesAsync();
+
+                task.ProgressCurrentUnits = newValue;
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+                string errorMessage = "Neizdevās atjaunināt progresu!";
+                SnackbarService.Add(errorMessage, Severity.Error);
+            }
         }
         /// <summary>
         /// UMF_003 – Izdzēst uzdevumu
