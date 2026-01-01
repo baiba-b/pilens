@@ -7,6 +7,6 @@ namespace Pilens.Data
     public class ApplicationUser : IdentityUser
     {
         public Pomodoro? Pomodoros { get; set; }
+        public ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
     }
-
 }

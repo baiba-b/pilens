@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pilens.Data;
 
@@ -11,9 +12,11 @@ using Pilens.Data;
 namespace Pilens.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260101233909_ToDoUser")]
+    partial class ToDoUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -327,7 +330,8 @@ namespace Pilens.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("UserID")
+                        .IsUnique();
 
                     b.ToTable("ToDoTasks");
                 });
@@ -420,8 +424,8 @@ namespace Pilens.Migrations
             modelBuilder.Entity("Pilens.Data.Models.ToDoTask", b =>
                 {
                     b.HasOne("Pilens.Data.ApplicationUser", "User")
-                        .WithMany("ToDoTasks")
-                        .HasForeignKey("UserID")
+                        .WithOne("ToDoTask")
+                        .HasForeignKey("Pilens.Data.Models.ToDoTask", "UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -451,7 +455,7 @@ namespace Pilens.Migrations
                 {
                     b.Navigation("Pomodoros");
 
-                    b.Navigation("ToDoTasks");
+                    b.Navigation("ToDoTask");
                 });
 
             modelBuilder.Entity("Pilens.Data.Models.Group", b =>

@@ -24,6 +24,7 @@ public partial class ToDoTask
     [Required]
     [ForeignKey(nameof(UserID))]
     public string UserID { get; set; } = string.Empty;
+    public virtual ApplicationUser? User { get; set; }
 
     public string Identifier { get; set; } = "Saraksts";
 

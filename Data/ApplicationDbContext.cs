@@ -22,6 +22,12 @@ namespace Pilens.Data
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
+
+            builder.Entity<ToDoTask>()
+                .HasOne(t => t.User)
+                .WithMany(u => u.ToDoTasks)
+                .HasForeignKey(t => t.UserID)
+                .IsRequired();
         }
     }
 }

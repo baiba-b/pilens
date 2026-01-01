@@ -13,8 +13,8 @@ namespace Pilens.Components.Pages
 {
     public partial class Pomodoro
     {
-        private static System.Timers.Timer? aTimer;
-        private static System.Timers.Timer? pTimer;
+        private System.Timers.Timer? productiveTimer;
+        private System.Timers.Timer? pauseTimer;
         private int RemainingSeconds { get; set; } = 0;
         private string DisplayStatus { get; set; } = "Stop";
         private bool StartBtnPressed { get; set; } = false;
@@ -25,7 +25,8 @@ namespace Pilens.Components.Pages
         private bool isDone { get; set; } = false;
         bool success;
         private MudForm? pomodoroForm;
-        
+        private bool isInitialized = false;
+
         private int CurrSession { get; set; } = 0;
         string PomodoroReqError = "Šis ir obligāts atribūts!";
 
@@ -88,27 +89,33 @@ namespace Pilens.Components.Pages
         /// </summary>
         private async Task SetTimer() //System.Timer funkciju implementācijas piemērs & apraksts ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
-            await pomodoroForm.Validate();
-            if (pomodoroForm.IsValid == false)
+            if (isInitialized == false)
             {
-                SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas.", Severity.Error);
-                return;
+                await pomodoroForm.Validate();
+                if (pomodoroForm.IsValid == false)
+                {
+                    SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas.", Severity.Error);
+                    return;
+                }
             }
-            string errorMessage = string.Empty; ;
-            if (aTimer != null)
+            string errorMessage = string.Empty; 
+            if (productiveTimer != null)
             {
-                errorMessage = "Kļūda atrodot taimeri!";
+                errorMessage = "Kļūda izveidojot taimeri!";
                 SnackbarService.Add(errorMessage, Severity.Error);
+                productiveTimer = null;
             }
             RemainingSeconds = pomodoroData.Minutes * 60;
 
             // Create a timer with a second interval.
-            aTimer = new System.Timers.Timer(1000);
+            
+            productiveTimer = new System.Timers.Timer(1000);
             // Hook up the Elapsed event for the timer. 
-            aTimer.Elapsed += UpdateTimer;
-            aTimer.AutoReset = true;
-            aTimer.Enabled = true;
+            productiveTimer.Elapsed += UpdateTimer;
+            productiveTimer.AutoReset = true;
+            productiveTimer.Enabled = true;
             StartBtnPressed = true;
+            isInitialized = true; 
         }
         public void AddSessions(int sessions)
         {
@@ -128,14 +135,7 @@ namespace Pilens.Components.Pages
             }
         }
         // Funkcija, kas sāk pauzes taimeri
-        private void SetPause(int min) //koda implementācijas piemērs ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
-        {
-            RemainingSeconds = min * 60;
-            pTimer = new System.Timers.Timer(1000);
-            pTimer.Elapsed += UpdatePauseTimer;
-            pTimer.AutoReset = true;
-            pTimer.Enabled = true;
-        }
+      
         // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši darba taimerim
         private void UpdateTimer(object source, ElapsedEventArgs e)
         {
@@ -148,15 +148,15 @@ namespace Pilens.Components.Pages
                 }
                 else
                 {
-                    if (aTimer == null)
+                    if (productiveTimer == null)
                     {
                         string errorMessage = "Kļūda atrodot taimeri!";
                         SnackbarService.Add(errorMessage, Severity.Error);
                         return;
                     }
-                    aTimer.Stop();
-                    aTimer.Dispose();
-                    aTimer = null;
+                    productiveTimer.Stop();
+                    productiveTimer.Dispose();
+                    productiveTimer = null;
                     CurrSession++;
 
                     if (CurrSession < pomodoroData.SessionAmount && CurrSession % pomodoroData.SessionLongPause != 0)
@@ -171,6 +171,7 @@ namespace Pilens.Components.Pages
                     }
                     else
                     {   //Restartē visu pēc visu sesiju pabeigšanas
+                        isInitialized = false;
                         RemainingSeconds = 0;
                         StartBtnPressed = false;
                         StopBtnPressed = false;
@@ -181,7 +182,15 @@ namespace Pilens.Components.Pages
                 }
             }
         }
-        // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši pauzes taimerim
+        private void SetPause(int min) //koda implementācijas piemērs ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
+        {
+            RemainingSeconds = min * 60;
+            pauseTimer = new System.Timers.Timer(1000);
+            pauseTimer.Elapsed += UpdatePauseTimer;
+            pauseTimer.AutoReset = true;
+            pauseTimer.Enabled = true;
+        }
+        // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši pauzes taimerim 
         private void UpdatePauseTimer(object source, ElapsedEventArgs e)
         {
             lock (_timerLock)
@@ -193,15 +202,15 @@ namespace Pilens.Components.Pages
                 }
                 else
                 {
-                    if (pTimer == null)
+                    if (pauseTimer == null)
                     {
                         string errorMessage = "Kļūda atrodot taimeri!";
                         SnackbarService.Add(errorMessage, Severity.Error);
                         return;
                     }
-                    pTimer?.Stop();
-                    pTimer?.Dispose();
-                    pTimer = null;
+                    pauseTimer?.Stop();
+                    pauseTimer?.Dispose();
+                    pauseTimer = null;
 
                     DeactivateActivePause();
                     SetTimer();
@@ -209,31 +218,33 @@ namespace Pilens.Components.Pages
             }
         }
         // Funkcija, kas atiestata taimeri uz sākotnējo stāvokli
-        private void RestartTimer()
+        private void StopPomodoroTimer()
         {
             if (!IsShortPause && !IsLongPause)
             {
-                if (aTimer == null)
+                if (productiveTimer == null)
                 {
                     ErrorMessage = "Kļūda atrodot taimeri!";
                     SnackbarService.Add(ErrorMessage, Severity.Error);
                     return;
                 }
-                aTimer.Stop();
-                aTimer.Dispose();
-                aTimer = null;
+                productiveTimer.Stop();
+                productiveTimer.Dispose();
+                productiveTimer = null;
+                isInitialized = false;
             }
             else
             {
-                if (pTimer == null)
+                if (pauseTimer == null)
                 {
                     ErrorMessage = "Kļūda atrodot taimeri!";
                     SnackbarService.Add(ErrorMessage, Severity.Error);
                     return;
                 }
-                pTimer.Stop();
-                pTimer.Dispose();
-                pTimer = null;
+                pauseTimer.Stop();
+                pauseTimer.Dispose();
+                isInitialized = false;
+                pauseTimer = null;
             }
 
             DeactivateActivePause();
@@ -246,15 +257,15 @@ namespace Pilens.Components.Pages
         }
         private void SkipPause(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
-            if (pTimer == null)
+            if (pauseTimer == null)
             {
                 string errorMessage = "Kļūda atrodot taimeri!";
                 SnackbarService.Add(errorMessage, Severity.Error);
                 return;
             }
-            pTimer.Stop();
-            pTimer.Dispose();
-            pTimer = null;
+            pauseTimer.Stop();
+            pauseTimer.Dispose();
+            pauseTimer = null;
             DeactivateActivePause();
             SetTimer();
         }
@@ -278,23 +289,23 @@ namespace Pilens.Components.Pages
 
             if (!IsShortPause && !IsLongPause)
             {
-                if (aTimer == null)
+                if (productiveTimer == null)
                 {
                     string errorMessage = "Kļūda atrodot taimeri!";
                     SnackbarService.Add(errorMessage, Severity.Error);
                     return;
                 }
-                aTimer.Stop();
+                productiveTimer.Stop();
             }
             else
             {
-                if (pTimer == null)
+                if (pauseTimer == null)
                 {
                     string errorMessage = "Kļūda atrodot taimeri!";
                     SnackbarService.Add(errorMessage, Severity.Error);
                     return;
                 }
-                pTimer.Stop();
+                pauseTimer.Stop();
             }
             StopBtnPressed = true;
         }
@@ -304,23 +315,23 @@ namespace Pilens.Components.Pages
         {
             if (!IsShortPause && !IsLongPause)
             {
-                if (aTimer == null)
+                if (productiveTimer == null)
                 {
                     string errorMessage = "Kļūda atrodot taimeri!";
                     SnackbarService.Add(errorMessage, Severity.Error);
                     return;
                 }
-                aTimer.Start();
+                productiveTimer.Start();
             }
             else
             {
-                if (pTimer == null)
+                if (pauseTimer == null)
                 {
                     string errorMessage = "Kļūda atrodot taimeri!";
                     SnackbarService.Add(errorMessage, Severity.Error);
                     return;
                 }
-                pTimer.Start();
+                pauseTimer.Start();
             }
             StopBtnPressed = false;
             InvokeAsync(StateHasChanged);

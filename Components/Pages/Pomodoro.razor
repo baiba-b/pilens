@@ -78,7 +78,7 @@
                                 <MudIconButton Icon="@Icons.Material.Filled.SkipNext" @onclick="SkipPause" />
                             </MudTooltip>
                         }
-                        <MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="RestartTimer">Stop</MudButton>
+                        <MudButton Color="Color.Secondary" Variant="Variant.Filled" @onclick="StopPomodoroTimer">Stop</MudButton>
                         @if (!StopBtnPressed)
                         {
                             <MudIconButton Icon="@Icons.Material.Filled.PauseCircleFilled" Color="Color.Error" @onclick="PauseTimer"></MudIconButton>

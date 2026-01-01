@@ -13,6 +13,7 @@ namespace Pilens.Data.Models
         public int SessionAmount { get; set; } = 4;
         public int SessionLongPause { get; set; } = 4;
         public int AdjustedMin { get; set; } = 5;
+        [Required]
         [ForeignKey(nameof(UserID))]
         public string UserID { get; set; } = string.Empty;
         public virtual ApplicationUser? User { get; set; }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pilens.Data;
 
@@ -11,9 +12,11 @@ using Pilens.Data;
 namespace Pilens.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260101233701_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -270,8 +273,7 @@ namespace Pilens.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserID")
-                        .IsUnique();
+                    b.HasIndex("UserID");
 
                     b.ToTable("Pomodoros");
                 });
@@ -409,8 +411,8 @@ namespace Pilens.Migrations
             modelBuilder.Entity("Pilens.Data.Models.Pomodoro", b =>
                 {
                     b.HasOne("Pilens.Data.ApplicationUser", "User")
-                        .WithOne("Pomodoros")
-                        .HasForeignKey("Pilens.Data.Models.Pomodoro", "UserID")
+                        .WithMany()
+                        .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -420,7 +422,7 @@ namespace Pilens.Migrations
             modelBuilder.Entity("Pilens.Data.Models.ToDoTask", b =>
                 {
                     b.HasOne("Pilens.Data.ApplicationUser", "User")
-                        .WithMany("ToDoTasks")
+                        .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -445,13 +447,6 @@ namespace Pilens.Migrations
                     b.Navigation("Group");
 
                     b.Navigation("ToDoTask");
-                });
-
-            modelBuilder.Entity("Pilens.Data.ApplicationUser", b =>
-                {
-                    b.Navigation("Pomodoros");
-
-                    b.Navigation("ToDoTasks");
                 });
 
             modelBuilder.Entity("Pilens.Data.Models.Group", b =>
