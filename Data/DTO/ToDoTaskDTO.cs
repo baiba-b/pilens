@@ -41,7 +41,7 @@ namespace Pilens.Data.DTO
             this.Description = task.Description;
             this.IsCompleted = task.IsCompleted;
             this.Effort = task.Effort;
-            this.Deadline = task.Deadline;
+            this.Deadline = task.Deadline ?? DateTime.Now;
             this.EffortDuration = task.EffortDuration;
             this.ToDoTaskGroups = task.ToDoTaskGroups;
             this.Identifier = task.Identifier;

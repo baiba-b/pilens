@@ -5,7 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using MudBlazor;
 using Pilens.Data;
 using Pilens.Data.DTO;
+using Pilens.Data.State;
 using System;
+using System.Linq;
 using System.Timers;
 using static MudBlazor.CategoryTypes;
 
@@ -35,6 +37,9 @@ namespace Pilens.Components.Pages
 
         [Inject]
         private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
+
+        [Inject]
+        private PomodoroState PomodoroState { get; set; } = default!;
 
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
@@ -74,6 +79,11 @@ namespace Pilens.Components.Pages
                     pomodoroData = new PomodoroDTO(existingPomodoro);
                     pomodoroData.UserID = userId;
                     RemainingSeconds = pomodoroData.Minutes * 60;
+                    PomodoroState.Minutes = pomodoroData.Minutes;
+                }
+                else
+                {
+                    PomodoroState.Minutes = pomodoroData.Minutes;
                 }
             }
             catch (Exception)
@@ -98,7 +108,10 @@ namespace Pilens.Components.Pages
                     return;
                 }
             }
-            string errorMessage = string.Empty; 
+
+            PomodoroState.Minutes = pomodoroData.Minutes;
+
+            string errorMessage = string.Empty;
             if (productiveTimer != null)
             {
                 errorMessage = "Kļūda izveidojot taimeri!";
@@ -390,6 +403,7 @@ namespace Pilens.Components.Pages
                 return;
             }
             pomodoroData.UserID = userId;
+            PomodoroState.Minutes = pomodoroData.Minutes;
 
             try
             {

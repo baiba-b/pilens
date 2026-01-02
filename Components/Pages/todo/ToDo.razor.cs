@@ -9,10 +9,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Pilens.Components.Shared;
+using Pilens.Data.State;
 
 namespace Pilens.Components.Pages.todo
 {
-    public partial class ToDo
+    public partial class ToDo : IDisposable
     {
         private const string SessionsMustBePositiveMessage = "Sesiju skaitam jābūt pozitīvam.";
 
@@ -22,6 +23,9 @@ namespace Pilens.Components.Pages.todo
         [Inject]
         private IDialogService DialogService { get; set; } = default!;
 
+        [Inject]
+        private PomodoroState PomodoroState { get; set; } = default!;
+
         [Parameter]
         public EventCallback<int> OnStartPomodoro { get; set; }
 
@@ -29,6 +33,8 @@ namespace Pilens.Components.Pages.todo
         private string? ErrorMessage { get; set; }
         private string NewGroupName { get; set; } = string.Empty;
         private string userId { get; set; }
+
+        private int pomodoroMinutes = 25;
 
         // TODO: kļūdas apstrāde
         private int TotalSessions => Items
@@ -40,14 +46,19 @@ namespace Pilens.Components.Pages.todo
         
         protected override async Task OnInitializedAsync()
         {
+            pomodoroMinutes = PomodoroState.Minutes;
+            PomodoroState.OnChange += OnPomodoroMinutesChanged;
+
             userId = await getUserId();
             if (string.IsNullOrWhiteSpace(userId))
             {
                 return;
             }
-          
+
             await LoadTasksAsync();
+            await RecalculateSessionsAsync();
         }
+
         private async Task LoadTasksAsync()
         {
             try
@@ -84,6 +95,14 @@ namespace Pilens.Components.Pages.todo
 
             return Math.Clamp((double)task.ProgressCurrentUnits / task.ProgressTargetUnits * 100.0, 0, 100);
         }
+
+        private void OnPomodoroMinutesChanged()
+        {
+            pomodoroMinutes = PomodoroState.Minutes;
+            _ = InvokeAsync(RecalculateSessionsAsync);
+            InvokeAsync(StateHasChanged);
+        }
+
         private async Task ItemUpdated(MudItemDropInfo<ToDoTask> dropItem)
         {
             try
@@ -105,9 +124,9 @@ namespace Pilens.Components.Pages.todo
                 var minutes = (int)Math.Ceiling(entity.EffortDuration.TotalMinutes);
                 if (dropItem.DropzoneIdentifier == "Sesijas")
                 {
-                    const int pomodoroMinutes = 25;
+                    var pomodoroLength = pomodoroMinutes > 0 ? pomodoroMinutes : 25;
                     entity.SessionsRequired = minutes > 0
-                        ? (int)Math.Ceiling(minutes / (double)pomodoroMinutes)
+                        ? (int)Math.Ceiling(minutes / (double)pomodoroLength)
                         : 0;
                 }
                 else
@@ -327,6 +346,69 @@ namespace Pilens.Components.Pages.todo
         private void NavigateToCreate()
         {
             Navigation.NavigateTo($"ToDo/create");
+        }
+
+        public void Dispose()
+        {
+            PomodoroState.OnChange -= OnPomodoroMinutesChanged;
+        }
+
+        private async Task RecalculateSessionsAsync()
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return;
+            }
+
+            var pomodoroLength = pomodoroMinutes > 0 ? pomodoroMinutes : 25;
+
+            try
+            {
+                await using var db = await DbContextFactory.CreateDbContextAsync();
+                var sessionTasks = await db.ToDoTasks
+                    .Where(t => t.UserID == userId && t.Identifier == "Sesijas")
+                    .ToListAsync();
+
+                var updated = false;
+                foreach (var task in sessionTasks)
+                {
+                    var minutes = (int)Math.Ceiling(task.EffortDuration.TotalMinutes);
+                    var newSessions = minutes > 0
+                        ? (int)Math.Ceiling(minutes / (double)pomodoroLength)
+                        : 0;
+
+                    if (task.SessionsRequired != newSessions)
+                    {
+                        task.SessionsRequired = newSessions;
+                        updated = true;
+                    }
+                }
+
+                if (updated)
+                {
+                    await db.SaveChangesAsync();
+                }
+
+                
+                if (Items.Count > 0)
+                {
+                    foreach (var task in Items.Where(t => t.Identifier == "Sesijas"))
+                    {
+                        var match = sessionTasks.FirstOrDefault(x => x.Id == task.Id);
+                        if (match != null)
+                        {
+                            task.SessionsRequired = match.SessionsRequired;
+                        }
+                    }
+
+                    InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (Exception)
+            {
+                var errorMessage = "Neizdevās pārrēķināt sesiju skaitu!";
+                SnackbarService.Add(errorMessage, Severity.Error);
+            }
         }
     }
 }

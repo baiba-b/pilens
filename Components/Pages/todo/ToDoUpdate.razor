@@ -60,7 +60,7 @@
                     </MudStack>
 
                     <MudDatePicker Label="Uzdevuma termiņš"
-                                   @bind-value="task.Deadline"
+                                   @bind-Date="task.Deadline"
                                    Required="true"
                                    RequiredError="@ToDoTaskReqError"
                                    Validation="@(new Func<DateTime, string>(DeadlineValidation))" />

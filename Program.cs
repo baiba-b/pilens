@@ -10,7 +10,7 @@ using Pilens.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMudServices();
-
+builder.Services.AddScoped<Pilens.Data.State.PomodoroState>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

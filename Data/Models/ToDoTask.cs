@@ -15,7 +15,7 @@ public partial class ToDoTask
     [Range(int.MinValue, 3)]
     public int Effort { get; set; } = 1;
     [Required]
-    public DateTime Deadline { get; set; } = DateTime.Now;
+    public DateTime? Deadline { get; set; } = DateTime.Now;
     [Required]
     public TimeSpan EffortDuration { get; set; } = TimeSpan.FromMinutes(30);
     [InverseProperty(nameof(ToDoTaskGroup.ToDoTask))]  
