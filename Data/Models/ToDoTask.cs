@@ -11,7 +11,6 @@ public partial class ToDoTask
     public string Title { get; set; } 
     public string? Description { get; set; } = string.Empty;
     public bool IsCompleted { get; set; } = false;
-    [Required]
     [Range(int.MinValue, 3)]
     public int Effort { get; set; } = 1;
     [Required]

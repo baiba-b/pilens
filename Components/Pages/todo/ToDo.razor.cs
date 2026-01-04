@@ -15,7 +15,7 @@ namespace Pilens.Components.Pages.todo
 {
     public partial class ToDo : IDisposable
     {
-        private const string SessionsMustBePositiveMessage = "Sesiju skaitam jābūt pozitīvam.";
+        private const string SessionsMustBePositiveMessage = "Sesiju skaitam jābūt pozitīvam";
 
         [Inject]
         private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
@@ -36,7 +36,6 @@ namespace Pilens.Components.Pages.todo
 
         private int pomodoroMinutes = 25;
 
-        // TODO: kļūdas apstrāde
         private int TotalSessions => Items
             .Where(task => task.Identifier == "Sesijas")
             .Sum(task => task.SessionsRequired);
@@ -201,16 +200,8 @@ namespace Pilens.Components.Pages.todo
 
         private async Task ChangeProgressAsync(ToDoTask task, int changeAmount)
         {
-            if (task == null || task.ProgressTargetUnits <= 0 || changeAmount == 0)
-            {
-                return;
-            }
-
-            var newValue = Math.Clamp(task.ProgressCurrentUnits + changeAmount, 0, task.ProgressTargetUnits);
-            if (newValue == task.ProgressCurrentUnits)
-            {
-                return;
-            }
+            
+            var newValue = task.ProgressCurrentUnits + changeAmount;
 
             try
             {
@@ -271,7 +262,7 @@ namespace Pilens.Components.Pages.todo
                 var entity = await db.ToDoTasks.FindAsync(task.Id);
                 if (entity == null)
                 {
-                    string errorMessage = "Uzdevums netika atrasts!";
+                    string errorMessage = "Neizdevās atrast uzdevumu!";
                     SnackbarService.Add(errorMessage, Severity.Error);
                     return;
                 }
@@ -302,7 +293,7 @@ namespace Pilens.Components.Pages.todo
 
             if (string.IsNullOrWhiteSpace(trimmedName))
             {
-                ErrorMessage = "Grupas nosaukums ir obligāts.";
+                ErrorMessage = "Grupas nosaukums ir obligāts!";
                 return;
             }
 
@@ -312,7 +303,7 @@ namespace Pilens.Components.Pages.todo
                 var exists = await db.Groups.AnyAsync(group => group.Name == trimmedName);
                 if (exists)
                 {
-                    ErrorMessage = "Grupa ar šādu nosaukumu jau pastāv.";
+                    ErrorMessage = "Grupa ar šādu nosaukumu jau pastāv!";
                     return;
                 }
 
@@ -324,7 +315,7 @@ namespace Pilens.Components.Pages.todo
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Grupu nevarēja izveidot: {ex.Message}";
+                ErrorMessage = "Grupu nevarēja izveidot!";
             }
         }
         // TODO: kļūdas apstrāde

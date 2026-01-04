@@ -110,7 +110,7 @@ public partial class ToDoCreate
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/ToDo");
+        Navigation.NavigateTo("/");
     }
 
     async Task<string> getUserId()
@@ -128,6 +128,8 @@ public partial class ToDoCreate
 
     private string TitleValidation(string? value)
     {
+        if(value == null)
+            return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";
         var len = value.Trim().Length;
         if (len < 1 || len > 200)
             return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";

@@ -92,7 +92,7 @@
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
         if (result.Succeeded)
         {
-            Logger.LogInformation("User logged in.");
+            Logger.LogInformation("Konts ir bloķēts. Mēģiniet vēlāk");
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.RequiresTwoFactor)
@@ -108,7 +108,7 @@
         }
         else
         {
-            errorMessage = "Error: Invalid login attempt.";
+            errorMessage = "Kļūda: Nepareizs pieteikšanās mēģinājums.";
         }
     }
 

@@ -1,5 +1,4 @@
-﻿using Mono.TextTemplating;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace Pilens.Data.Models
 

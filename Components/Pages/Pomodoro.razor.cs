@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using System.Timers;
 using static MudBlazor.CategoryTypes;
+using Microsoft.JSInterop;
 
 namespace Pilens.Components.Pages
 {
@@ -40,6 +41,9 @@ namespace Pilens.Components.Pages
 
         [Inject]
         private PomodoroState PomodoroState { get; set; } = default!;
+
+        [Inject]
+        private IJSRuntime JSRuntime { get; set; } = default!;
 
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
@@ -172,6 +176,8 @@ namespace Pilens.Components.Pages
                     productiveTimer = null;
                     CurrSession++;
 
+                    _ = InvokeAsync(() => PlaySoundAsync("yippe"));
+
                     if (CurrSession < pomodoroData.SessionAmount && CurrSession % pomodoroData.SessionLongPause != 0)
                     {
                         IsShortPause = true;
@@ -195,6 +201,7 @@ namespace Pilens.Components.Pages
                 }
             }
         }
+
         private void SetPause(int min) //koda implementācijas piemērs ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
             RemainingSeconds = min * 60;
@@ -224,6 +231,8 @@ namespace Pilens.Components.Pages
                     pauseTimer?.Stop();
                     pauseTimer?.Dispose();
                     pauseTimer = null;
+
+                    _ = InvokeAsync(() => PlaySoundAsync("item-pick-up"));
 
                     DeactivateActivePause();
                     SetTimer();
@@ -280,8 +289,20 @@ namespace Pilens.Components.Pages
             pauseTimer.Dispose();
             pauseTimer = null;
             DeactivateActivePause();
+            _ = PlaySoundAsync("item-pick-up");
             SetTimer();
         }
+        // Kods ģenerēts ar AI rīku
+        private Task PlaySoundAsync(string clipName)
+        {
+            if (string.IsNullOrWhiteSpace(clipName))
+            {
+                return Task.CompletedTask;
+            }
+
+            return JSRuntime.InvokeVoidAsync("audioController.playSound", clipName).AsTask();
+        }
+
         private void DeactivateActivePause()
         {
             if (IsShortPause)

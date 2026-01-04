@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pilens", "Pilens.csproj", "{02A0E0CF-E438-4848-925C-DDFBBD3EC4CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PilensTesting", "..\PilensTesting\PilensTesting.csproj", "{51C9E99D-29F4-418C-A9FB-7A3C76782E4B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PilensUnitTests", "..\PilensUnitTests\PilensUnitTests.csproj", "{63FF9711-8596-4945-99F0-AE1C499A3070}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{02A0E0CF-E438-4848-925C-DDFBBD3EC4CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02A0E0CF-E438-4848-925C-DDFBBD3EC4CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02A0E0CF-E438-4848-925C-DDFBBD3EC4CA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{51C9E99D-29F4-418C-A9FB-7A3C76782E4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{51C9E99D-29F4-418C-A9FB-7A3C76782E4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{51C9E99D-29F4-418C-A9FB-7A3C76782E4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{51C9E99D-29F4-418C-A9FB-7A3C76782E4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63FF9711-8596-4945-99F0-AE1C499A3070}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63FF9711-8596-4945-99F0-AE1C499A3070}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63FF9711-8596-4945-99F0-AE1C499A3070}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63FF9711-8596-4945-99F0-AE1C499A3070}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
