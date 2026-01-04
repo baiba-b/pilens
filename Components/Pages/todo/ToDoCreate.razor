@@ -57,11 +57,10 @@
 
                 <!-- Datums  -->
                 <MudDatePicker Label="Uzdevuma termiņš"
-                               @bind-value="todoTaskDto.Deadline"
+                               @bind-Date="todoTaskDto.Deadline"
                                Required="true"
                                RequiredError="@ToDoTaskReqError"
-                              
-                               Validation="@(new Func<DateTime, string>(DeadlineValidation))" />
+                               Validation="@(new Func<DateTime?, string>(DeadlineValidation))" />
 
                 <MudStack Direction="Row" Spacing="2">
                     <!-- Progresa esošās vienības: pozitīvs skaitlis -->

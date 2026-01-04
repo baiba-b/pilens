@@ -146,10 +146,12 @@ public partial class ToDoCreate
         return string.Empty;
     }
 
-    private string DeadlineValidation(DateTime value)
+    private string DeadlineValidation(DateTime? value)
     {
-        var today = DateTime.Today;
-        if (value.Date < today)
+        if (value is null)
+            return "Datums ir obligāts.";
+
+        if (value.Value.Date < DateTime.Today)
             return "Datums nevar būt pagātnē.";
         return string.Empty;
     }

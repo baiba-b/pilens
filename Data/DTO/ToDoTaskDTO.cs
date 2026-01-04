@@ -16,7 +16,7 @@ namespace Pilens.Data.DTO
         [Range(int.MinValue, 3, ErrorMessage = "Vērtība nevar būt lielāka par 3.")]
         public int Effort { get; set; } = 1;
         [Required]
-        public DateTime Deadline { get; set; } = DateTime.Now;
+        public DateTime? Deadline { get; set; } = DateTime.Now;
         [Required]
         public TimeSpan EffortDuration { get; set; } = TimeSpan.FromMinutes(30);
         [InverseProperty(nameof(ToDoTaskGroup.ToDoTask))]
