@@ -72,7 +72,6 @@ namespace Pilens.Components.Pages.todo
         {
             try
             {
-               
                 await using var db = await DbContextFactory.CreateDbContextAsync();
                 Items = await db.ToDoTasks
                     .AsNoTracking()
@@ -102,6 +101,7 @@ namespace Pilens.Components.Pages.todo
                 SnackbarService.Add(errorMessage, Severity.Error);
                 return 0;
             }
+
             if (task.ProgressTargetUnits <= 0)
             {
                 return 0;
@@ -361,25 +361,31 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                ErrorMessage = "Neizdevās identificēt lietotāju.";
+                return;
+            }
+
             try
             {
                 await using var db = await DbContextFactory.CreateDbContextAsync();
-                // Pārbauda, vai grupa ar šādu nosaukumu jau eksistē
-                var exists = await db.Groups.AnyAsync(group => group.Name == trimmedName);
+                // Pārbauda, vai grupa ar šādu nosaukumu jau eksistē šim lietotājam
+                var exists = await db.Groups.AnyAsync(group => group.UserID == userId && group.Name == trimmedName);
                 if (exists)
                 {
                     ErrorMessage = "Grupa ar šādu nosaukumu jau pastāv!";
                     return;
                 }
 
-                db.Groups.Add(new Group { Name = trimmedName });
+                db.Groups.Add(new Group { Name = trimmedName, UserID = userId });
                 await db.SaveChangesAsync();
 
                 // Notīra ievades lauku pēc veiksmīgas izveides
                 NewGroupName = string.Empty;
                 ErrorMessage = null;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ErrorMessage = "Grupu nevarēja izveidot!";
             }
@@ -461,7 +467,6 @@ namespace Pilens.Components.Pages.todo
                     await db.SaveChangesAsync();
                 }
 
-                
                 // Atjaunina arī lokālo Items sarakstu
                 if (Items.Count > 0)
                 {

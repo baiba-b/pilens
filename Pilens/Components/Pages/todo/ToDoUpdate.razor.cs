@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
 using Pilens.Data;
@@ -18,7 +19,8 @@ public partial class ToDoUpdate
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
 
-   
+    [Inject]
+    private AuthenticationStateProvider _authenticationStateProvider { get; set; } = default!;
 
     [Parameter]
     public int TaskId { get; set; }
@@ -33,22 +35,30 @@ public partial class ToDoUpdate
     // TODO: change to DTO
     private IEnumerable<Group> selectedGroups = new HashSet<Group>();
     private List<Group> groups = new();
+    private string userId = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            await using var db = await DbContextFactory.CreateDbContextAsync();
+            userId = await getUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                ErrorMessage = "Neizdevās identificēt lietotāju.";
+                return;
+            }
 
+            await using var db = await DbContextFactory.CreateDbContextAsync();
 
             groups = await db.Groups
                 .AsNoTracking()
+                .Where(g => g.UserID == userId)
                 .ToListAsync();
 
             var task2 = await db.ToDoTasks
                 .Include(x => x.ToDoTaskGroups)
                 .ThenInclude(x => x.Group)
-                .FirstOrDefaultAsync(x => x.Id == TaskId);
+                .FirstOrDefaultAsync(x => x.Id == TaskId && x.UserID == userId);
 
             if (task2 == null)
             {
@@ -57,11 +67,15 @@ public partial class ToDoUpdate
                 return;
             }
 
-            selectedGroups = task2.ToDoTaskGroups.Select(tg => tg.Group).ToList();
+            selectedGroups = task2.ToDoTaskGroups
+                .Select(tg => tg.Group)
+                .Where(g => g.UserID == userId)
+                .ToList();
+
             task = task2;
             ErrorMessage = null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             ErrorMessage = "Neizdevās ielādēt grupas!";
             task = null;
@@ -86,13 +100,19 @@ public partial class ToDoUpdate
             }
         }
 
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            ErrorMessage = "Neizdevās identificēt lietotāju.";
+            return;
+        }
+
         try
         {
             await using var db = await DbContextFactory.CreateDbContextAsync();
 
             var dbTask = await db.ToDoTasks
                 .Include(x => x.ToDoTaskGroups)
-                .FirstOrDefaultAsync(x => x.Id == task.Id);
+                .FirstOrDefaultAsync(x => x.Id == task.Id && x.UserID == userId);
 
             if (dbTask == null)
             {
@@ -112,7 +132,11 @@ public partial class ToDoUpdate
             dbTask.ProgressCurrentUnits = task.ProgressCurrentUnits;
             dbTask.ProgressUnitType = task.ProgressUnitType;
 
-            var selectedIds = selectedGroups.Select(g => g.Id).ToHashSet();
+            var selectedIds = selectedGroups
+                .Where(g => g.UserID == userId)
+                .Select(g => g.Id)
+                .ToHashSet();
+
             var existingIds = dbTask.ToDoTaskGroups.Select(tg => tg.GroupId).ToList();
 
             var addedIds = selectedIds.Except(existingIds).ToList();
@@ -141,7 +165,7 @@ public partial class ToDoUpdate
             await db.SaveChangesAsync();
             Navigation.NavigateTo("/");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             ErrorMessage = "Kļūda! Nevarēja saglabāt izmaiņas!";
             SnackbarService.Add(ErrorMessage, Severity.Error);
@@ -153,21 +177,46 @@ public partial class ToDoUpdate
         Navigation.NavigateTo("/");
     }
 
+    private async Task<string> getUserId()
+    {
+        try
+        {
+            var user = (await _authenticationStateProvider.GetAuthenticationStateAsync()).User;
+            var UserId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
+            return UserId ?? string.Empty;
+        }
+        catch (Exception)
+        {
+            string errorMessage = "Neizdevās identificēt lietotāju.";
+            SnackbarService.Add(errorMessage, Severity.Error);
+            return string.Empty;
+        }
+    }
+
     private string TitleValidation(string? value)
     {
         var len = value.Trim().Length;
         if (len < 1 || len > 200)
+        {
             return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";
+        }
+
         return string.Empty;
     }
 
     private string DescriptionValidation(string? value)
     {
         if (value is null)
+        {
             return string.Empty;
+        }
+
         var trimmed = value.Trim();
         if (trimmed.Length > 500)
+        {
             return "Apraksts nevar būt garāks par 500 simboliem!";
+        }
+
         return string.Empty;
     }
 
@@ -175,46 +224,70 @@ public partial class ToDoUpdate
     {
         var today = DateTime.Today;
         if (value.Date < today)
+        {
             return "Datums nevar būt pagātnē.";
+        }
+
         return string.Empty;
     }
 
     private string EffortValidation(int value)
     {
         if (value < 1 || value > 3)
+        {
             return "Grūtības pakāpei jābūt no 1 līdz 3.";
+        }
+
         return string.Empty;
     }
 
     private string EffortDurationValidation(TimeSpan value)
     {
         if (value >= TimeSpan.FromHours(24))
+        {
             return "Laikam jābūt 24-stundu formātā (HH:MM).";
+        }
+
         return string.Empty;
     }
 
     private string ProgressTargetValidation(int value)
     {
         if (value < 0)
+        {
             return "Progresa mērķa vienībām jābūt pozitīvam skaitlim.";
+        }
+
         return string.Empty;
     }
 
     private string ProgressCurrentValidation(int value)
     {
         if (value < 0)
+        {
             return "Progresa esošajām vienībām jābūt pozitīvam skaitlim.";
+        }
+
         if (task is not null && task.ProgressTargetUnits >= 0 && value > task.ProgressTargetUnits)
+        {
             return "Esošās vienības nevar pārsniegt mērķa vienības.";
+        }
+
         return string.Empty;
     }
 
     private string ProgressUnitTypeValidation(string? value)
     {
         if (value is null)
+        {
             return string.Empty;
+        }
+
         if (value.Trim().Length > 100)
+        {
             return "Vienības tips nevar būt garāks par 100 simboliem.";
+        }
+
         return string.Empty;
     }
 }

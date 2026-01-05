@@ -5,6 +5,7 @@ using MudBlazor;
 using Pilens.Data;
 using Pilens.Data.DTO;
 using Pilens.Data.Models;
+using System.Linq;
 
 namespace Pilens.Components.Pages.todo;
 
@@ -26,21 +27,30 @@ public partial class ToDoCreate
         todoTaskDto = new ToDoTaskDTO();
     }
 
-    List<GroupDTO> groups = new();
+    private List<GroupDTO> groups = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            await using var db = await DbContextFactory.CreateDbContextAsync();
-            groups = await db.Groups
-                .Select(g => new GroupDTO(g))
-                .ToListAsync();
             var uid = await getUserId();
+            if (string.IsNullOrWhiteSpace(uid))
+            {
+                ErrorMessage = "Neizdevās identificēt lietotāju.";
+                SnackbarService.Add(ErrorMessage, Severity.Error);
+                return;
+            }
 
             todoTaskDto.UserID = uid;
+
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            groups = await db.Groups
+                .AsNoTracking()
+                .Where(g => g.UserID == uid)
+                .Select(g => new GroupDTO(g))
+                .ToListAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             ErrorMessage = "Neizdevās ielādēt grupas!";
             SnackbarService.Add(ErrorMessage, Severity.Error);
@@ -59,6 +69,12 @@ public partial class ToDoCreate
                 SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas!", Severity.Error);
                 return;
             }
+        }
+
+        if (string.IsNullOrWhiteSpace(todoTaskDto.UserID))
+        {
+            SnackbarService.Add("Neizdevās identificēt lietotāju.", Severity.Error);
+            return;
         }
 
         try
@@ -84,24 +100,39 @@ public partial class ToDoCreate
             db.ToDoTasks.Add(task);
             await db.SaveChangesAsync();
 
-            foreach (var groupDto in selectedGroups)
+            var selectedIds = selectedGroups.Select(g => g.Id).ToList();
+            if (selectedIds.Count > 0)
             {
-                var toDoTaskGroup = new ToDoTaskGroup
-                {
-                    ToDoTaskId = task.Id,
-                    GroupId = groupDto.Id
-                };
-                db.ToDoTaskGroups.Add(toDoTaskGroup);
-            }
+                var userGroupIds = await db.Groups
+                    .Where(g => g.UserID == todoTaskDto.UserID && selectedIds.Contains(g.Id))
+                    .Select(g => g.Id)
+                    .ToListAsync();
 
-            await db.SaveChangesAsync();
+                if (userGroupIds.Count != selectedIds.Count)
+                {
+                    SnackbarService.Add("Nevar pievienot grupas, kas nepieder lietotājam.", Severity.Error);
+                    return;
+                }
+
+                foreach (var groupId in userGroupIds)
+                {
+                    db.ToDoTaskGroups.Add(new ToDoTaskGroup
+                    {
+                        ToDoTaskId = task.Id,
+                        GroupId = groupId
+                    });
+                }
+
+                await db.SaveChangesAsync();
+            }
 
             SnackbarService.Add("Uzdevums veiksmīgi izveidots!", Severity.Success);
 
             Navigation.NavigateTo("/");
             todoTaskDto = new ToDoTaskDTO();
+            selectedGroups = new HashSet<GroupDTO>();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             ErrorMessage = "Neizdevās izveidot uzdevumu!";
             SnackbarService.Add(ErrorMessage, Severity.Error);
@@ -125,73 +156,110 @@ public partial class ToDoCreate
         return UserId!;
     }
 
-
     private string TitleValidation(string? value)
     {
-        if(value == null)
+        if (value == null)
+        {
             return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";
+        }
+
         var len = value.Trim().Length;
         if (len < 1 || len > 200)
+        {
             return "Uzdevuma nosaukumam jābūt 1–200 simbolu garam!";
+        }
+
         return string.Empty;
     }
 
     private string DescriptionValidation(string? value)
     {
         if (value is null)
+        {
             return string.Empty;
+        }
+
         var trimmed = value.Trim();
         if (trimmed.Length > 500)
+        {
             return "Apraksts nevar būt garāks par 500 simboliem!";
+        }
+
         return string.Empty;
     }
 
     private string DeadlineValidation(DateTime? value)
     {
         if (value is null)
+        {
             return "Datums ir obligāts.";
+        }
 
         if (value.Value.Date < DateTime.Today)
+        {
             return "Datums nevar būt pagātnē.";
+        }
+
         return string.Empty;
     }
 
     private string EffortValidation(int value)
     {
         if (value < 1 || value > 3)
+        {
             return "Grūtības pakāpei jābūt no 1 līdz 3.";
+        }
+
         return string.Empty;
     }
 
     private string EffortDurationValidation(TimeSpan value)
     {
         if (value >= TimeSpan.FromHours(24))
+        {
             return "Laikam jābūt 24-stundu formātā (HH:MM).";
+        }
+
         return string.Empty;
     }
 
     private string ProgressTargetValidation(int value)
     {
         if (value < 0)
+        {
             return "Progresa mērķa vienībām jābūt pozitīvam skaitlim.";
+        }
+
         return string.Empty;
     }
 
     private string ProgressCurrentValidation(int value)
     {
         if (value < 0)
+        {
             return "Progresa esošajām vienībām jābūt pozitīvam skaitlim.";
+        }
+
         if (todoTaskDto.ProgressTargetUnits >= 0 && value > todoTaskDto.ProgressTargetUnits)
+        {
             return "Esošās vienības nevar pārsniegt mērķa vienības.";
+        }
+
         return string.Empty;
     }
 
     private string ProgressUnitTypeValidation(string? value)
     {
         if (value is null)
+        {
             return string.Empty;
+        }
+
         if (value.Trim().Length > 100)
+        {
             return "Vienības tips nevar būt garāks par 100 simboliem.";
+        }
+
         return string.Empty;
     }
 }

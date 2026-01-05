@@ -8,5 +8,6 @@ namespace Pilens.Data
     {
         public Pomodoro? Pomodoros { get; set; }
         public ICollection<ToDoTask> ToDoTasks { get; set; } = new List<ToDoTask>();
+        public ICollection<Group> Groups { get; set; } = new List<Group>();
     }
 }
