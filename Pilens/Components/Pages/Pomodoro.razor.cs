@@ -16,25 +16,38 @@ namespace Pilens.Components.Pages
 {
     public partial class Pomodoro
     {
+        // Taimera objekts produktīvajam laikam
         private System.Timers.Timer? productiveTimer;
+        // Pauzes taimera objekts
         private System.Timers.Timer? pauseTimer;
+        // Sekundes, kas atlicis aktīvajam taimerim
         private int RemainingSeconds { get; set; } = 0;
-        private string DisplayStatus { get; set; } = "Stop";
+
+        // Norāda, vai taimeris ir sākts
         private bool StartBtnPressed { get; set; } = false;
+        // Norāda, vai taimeris ir pauzē
         private bool StopBtnPressed { get; set; } = false;
         private bool IsShortPause { get; set; } = false;
         private bool IsLongPause { get; set; } = false;
+        // Kļūdu ziņa UI
         string ErrorMessage = string.Empty;
-        private bool isDone { get; set; } = false;
+
+        // MudForm validācijas statuss - parāda vai vērtības ir korektas
         bool success;
+        // Forma no UI
         private MudForm? pomodoroForm;
+        // Lai nepieļautu dubultu inicializāciju, kas var rasties ar taimera objektu 
         private bool isInitialized = false;
 
+        // Pašreizējā sesijas kārtas numurs
         private int CurrSession { get; set; } = 0;
+        // Obligātā lauka kļūdas teksts
         string PomodoroReqError = "Šis ir obligāts atribūts!";
 
+        // DTO ar lietotāja konfigurāciju
         PomodoroDTO pomodoroData = new();
-        private readonly object _timerLock = new(); //lai taimeris netruprina atjaunoties kamēr iestata pauzi
+        //Lock objekts lai taimeris netruprina atjaunoties kamēr iestata pauzi
+        private readonly object _timerLock = new();
 
         [Inject]
         private IDbContextFactory<ApplicationDbContext> DbContextFactory { get; set; } = default!;
@@ -45,12 +58,15 @@ namespace Pilens.Components.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; } = default!;
 
+        /// <summary>
+        /// Formatē atlikušās sekundes cilvēklasāmā formātā mm:ss.
+        /// </summary>
         private string DisplayTime =>
             TimeSpan.FromSeconds(RemainingSeconds).ToString(@"mm\:ss");
 
-        public bool IsRunning => StartBtnPressed;
-
-       
+        /// <summary>
+        /// Pomodoro iestatījumu validācija (nepieļauj negatīvas vai nulles vērtības).
+        /// </summary>
         private string PomodoroValidation(int arg)
         {
             string errorMessage = string.Empty;
@@ -63,6 +79,9 @@ namespace Pilens.Components.Pages
             else return errorMessage;
         }
 
+        /// <summary>
+        /// Ielādē lietotāja saglabātos Pomodoro datus un izveido PomodoroDTO objektu, lai sadalītu datubāzes un loģikas slāni.
+        /// </summary>
         protected override async Task OnInitializedAsync()
         {
             success = true;
@@ -80,6 +99,7 @@ namespace Pilens.Components.Pages
                .FirstOrDefaultAsync(p => p.UserID == userId);
                 if (existingPomodoro is not null)
                 {
+                    // Izveido DTO no saglabātajiem datiem, lai aizpildītu formu ar lietotāja konfigurāciju
                     pomodoroData = new PomodoroDTO(existingPomodoro);
                     pomodoroData.UserID = userId;
                     RemainingSeconds = pomodoroData.Minutes * 60;
@@ -87,6 +107,7 @@ namespace Pilens.Components.Pages
                 }
                 else
                 {
+                    // Ja lietotājam nav ieraksta, izmanto DTO noklusējuma vērtības un sinhronizē stāvokli
                     PomodoroState.Minutes = pomodoroData.Minutes;
                 }
             }
@@ -98,11 +119,13 @@ namespace Pilens.Components.Pages
             }
 
         }
+
         /// <summary>
-        /// Funkcija, kas izveido un sāk taimeri
+        /// Funkcija, kas izveido un sāk taimeri produktīvajai sesijai.
         /// </summary>
         private async Task SetTimer() //System.Timer funkciju implementācijas piemērs & apraksts ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
+            // Pomodoro formas validācija, lai nevarētu sākt taimeri ar nepieļaujamiem datiem
             if (isInitialized == false)
             {
                 await pomodoroForm.Validate();
@@ -116,6 +139,7 @@ namespace Pilens.Components.Pages
             PomodoroState.Minutes = pomodoroData.Minutes;
 
             string errorMessage = string.Empty;
+            // Nedrīkst startēt taimeri, ja eksistē jau kāds taimeris
             if (productiveTimer != null)
             {
                 errorMessage = "Kļūda izveidojot taimeri!";
@@ -124,36 +148,21 @@ namespace Pilens.Components.Pages
             }
             RemainingSeconds = pomodoroData.Minutes * 60;
 
-            // Create a timer with a second interval.
-            
+            // Izveido taimeri ar sekundes intervālu
+
             productiveTimer = new System.Timers.Timer(1000);
-            // Hook up the Elapsed event for the timer. 
+            // Pievieno taimerim Elapsed notikuma apstrādātāju. (katru sekundi uzsauksi pievienoto funkciju)
             productiveTimer.Elapsed += UpdateTimer;
             productiveTimer.AutoReset = true;
             productiveTimer.Enabled = true;
             StartBtnPressed = true;
-            isInitialized = true; 
+            isInitialized = true;
         }
-        public void AddSessions(int sessions)
-        {
-            if (sessions <= 0)
-            {
-                return;
-            }
 
-            if (StartBtnPressed)
-            {
-                pomodoroData.SessionAmount += sessions;
-                InvokeAsync(StateHasChanged);
-            }
-            else
-            {
-                InitializeAndStartSessions(sessions);
-            }
-        }
-        // Funkcija, kas sāk pauzes taimeri
-      
-        // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši darba taimerim
+
+        /// <summary>
+        /// Atjauno atlikušās sekundes produktīvajam taimerim un pārslēdz uz pauzēm, kad tas beidzas.
+        /// </summary>
         private void UpdateTimer(object source, ElapsedEventArgs e)
         {
             lock (_timerLock)
@@ -165,6 +174,7 @@ namespace Pilens.Components.Pages
                 }
                 else
                 {
+                    // Kad produktīvais taimeris beidzas
                     if (productiveTimer == null)
                     {
                         string errorMessage = "Kļūda atrodot taimeri!";
@@ -176,8 +186,9 @@ namespace Pilens.Components.Pages
                     productiveTimer = null;
                     CurrSession++;
 
-                    _ = InvokeAsync(() => PlaySoundAsync("yippe"));
+                    _ = InvokeAsync(() => PlaySoundAsync("yippe"));  // '_' tiek izmantots kā discard, lai ignorētu atgriezto Task un vienkārši palaistu skaņu asinhroni
 
+                    // Izvēlas īso vai garo pauzi
                     if (CurrSession < pomodoroData.SessionAmount && CurrSession % pomodoroData.SessionLongPause != 0)
                     {
                         IsShortPause = true;
@@ -202,6 +213,9 @@ namespace Pilens.Components.Pages
             }
         }
 
+        /// <summary>
+        /// Startē pauzes taimeri ar dotajām minūtēm.
+        /// </summary>
         private void SetPause(int min) //koda implementācijas piemērs ņemts no https://learn.microsoft.com/en-us/dotnet/api/system.timers.timer?view=net-9.0  un https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-9.0 
         {
             RemainingSeconds = min * 60;
@@ -210,7 +224,12 @@ namespace Pilens.Components.Pages
             pauseTimer.AutoReset = true;
             pauseTimer.Enabled = true;
         }
-        // Funkcija, kas atjauno UI un atlikošu laiku atbilstoši pauzes taimerim 
+
+
+
+        /// <summary>
+        /// Atjauno atlikušās sekundes pauzes laikā un atgriež pie darba taimera, kad pauze beidzas.
+        /// </summary>
         private void UpdatePauseTimer(object source, ElapsedEventArgs e)
         {
             lock (_timerLock)
@@ -222,6 +241,7 @@ namespace Pilens.Components.Pages
                 }
                 else
                 {
+                    // Kad pauze beidzas, atgriežamies pie darba sesijas
                     if (pauseTimer == null)
                     {
                         string errorMessage = "Kļūda atrodot taimeri!";
@@ -232,16 +252,20 @@ namespace Pilens.Components.Pages
                     pauseTimer?.Dispose();
                     pauseTimer = null;
 
-                    _ = InvokeAsync(() => PlaySoundAsync("item-pick-up"));
+                    _ = InvokeAsync(() => PlaySoundAsync("item-pick-up"));  // '_' tiek izmantots kā discard, lai ignorētu atgriezto Task un vienkārši palaistu skaņu asinhroni
 
                     DeactivateActivePause();
                     SetTimer();
                 }
             }
         }
-        // Funkcija, kas atiestata taimeri uz sākotnējo stāvokli
+
+        /// <summary>
+        /// Aptur jebkuru aktīvo taimeri, notīra pēdējo esošo stāvokli un atiestata sesiju skaitītāju.
+        /// </summary>
         private void StopPomodoroTimer()
         {
+            // Atkarībā no fāzes aptur pareizo taimeri
             if (!IsShortPause && !IsLongPause)
             {
                 if (productiveTimer == null)
@@ -277,6 +301,10 @@ namespace Pilens.Components.Pages
             CurrSession = 0;
             InvokeAsync(StateHasChanged);
         }
+
+        /// <summary>
+        /// Izlaiž aktīvo pauzi un uzreiz startē nākamo darba sesiju.
+        /// </summary>
         private void SkipPause(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
             if (pauseTimer == null)
@@ -292,7 +320,10 @@ namespace Pilens.Components.Pages
             _ = PlaySoundAsync("item-pick-up");
             SetTimer();
         }
-        // Kods ģenerēts ar AI rīku
+
+        /// <summary>
+        /// Atskaņo skaņu pēc klipa nosaukuma, izmantojot JS interopu. Kods ģenerēts ar AI rīku.
+        /// </summary>
         private Task PlaySoundAsync(string clipName)
         {
             if (string.IsNullOrWhiteSpace(clipName))
@@ -303,6 +334,9 @@ namespace Pilens.Components.Pages
             return JSRuntime.InvokeVoidAsync("audioController.playSound", clipName).AsTask();
         }
 
+        /// <summary>
+        /// Notīra īsās vai garās pauzes patiesumvērtības.
+        /// </summary>
         private void DeactivateActivePause()
         {
             if (IsShortPause)
@@ -317,10 +351,13 @@ namespace Pilens.Components.Pages
             }
         }
 
-        //Funkcija, kas aptur taimeri
+        /// <summary>
+        /// Aptur aktīvo taimeri (darba vai pauzes) un atzīmē, ka taimeris ir pauzē.
+        /// </summary>
         private void PauseTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
 
+            // Apstādina pareizo taimeri atkarībā no fāzes
             if (!IsShortPause && !IsLongPause)
             {
                 if (productiveTimer == null)
@@ -344,9 +381,12 @@ namespace Pilens.Components.Pages
             StopBtnPressed = true;
         }
 
-        // Funkcija, kas turpina taimeri pēc apturēšanas
+        /// <summary>
+        /// Turpina aktīvo taimeri pēc pauzes.
+        /// </summary>
         private void ContinueTimer(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
+            // Turpina atbilstošo taimeri
             if (!IsShortPause && !IsLongPause)
             {
                 if (productiveTimer == null)
@@ -370,6 +410,10 @@ namespace Pilens.Components.Pages
             StopBtnPressed = false;
             InvokeAsync(StateHasChanged);
         }
+
+        /// <summary>
+        /// Manuāli pielāgo atlikušās minūtes (pieskaita vai atņem).
+        /// </summary>
         private void AdjustTime(bool adjustType)
         {
             if (adjustType == true)
@@ -382,13 +426,17 @@ namespace Pilens.Components.Pages
                 else RemainingSeconds = 0;
             }
         }
+
+        /// <summary>
+        /// Nolasa lietotāja Id no autentikācijas konteksta.
+        /// </summary>
         async Task<string> getUserId()
         {
             try
             {
                 var user = (await _authenticationStateProvider.GetAuthenticationStateAsync()).User;
                 var UserId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
-               
+
                 return UserId;
             }
             catch (Exception)
@@ -398,20 +446,44 @@ namespace Pilens.Components.Pages
                 return string.Empty;
             }
         }
+        /// <summary>
+        /// Palielina vai inicializē sesiju skaitu atkarībā no taimera statusa.  (Izmanto, lai sāktu vai pievienotu sesijas  Pomodoro taimerim no uzdevumu skata)
+        /// </summary>
+        public void AddSessions(int sessions)
+        {
+            if (sessions <= 0)
+            {
+                return;
+            }
 
+            if (StartBtnPressed)
+            {
+                pomodoroData.SessionAmount += sessions;
+                InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                InitializeAndStartSessions(sessions);
+            }
+        }
+        /// <summary>
+        /// Inicializē sesiju skaitu un uzreiz startē taimeri (Izmanto, lai sāktu Pomodoro taimeri no uzdevumiem)
+        /// </summary>
         public void InitializeAndStartSessions(int sessions)
         {
             pomodoroData.SessionAmount = sessions;
             CurrSession = 0;
-            isDone = false;
             StartBtnPressed = true;
             SetTimer();
         }
-        //TODO: Pārskatīt kļūdu apstrādi
+
+        /// <summary>
+        /// Saglabā lietotāja Pomodoro taimera konfigurāciju datubāzē un atjauno PomodoroState minūtes, lai tās saņemtu uzdevumu modulis.
+        /// </summary>
         private async Task SavePomodoroData(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
         {
             await pomodoroForm.Validate();
-            if(pomodoroForm.IsValid == false)
+            if (pomodoroForm.IsValid == false)
             {
                 SnackbarService.Add("Lūdzu, ievadiet korektus datus pirms saglabāšanas.", Severity.Error);
                 return;

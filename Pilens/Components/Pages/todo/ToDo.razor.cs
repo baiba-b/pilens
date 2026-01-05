@@ -29,20 +29,27 @@ namespace Pilens.Components.Pages.todo
         [Parameter]
         public EventCallback<int> OnStartPomodoro { get; set; }
 
+        // Lietotāja uzdevumu saraksts
         private List<ToDoTask> Items { get; set; } = new();
+        // Kļūdu ziņa UI
         private string? ErrorMessage { get; set; }
         private string NewGroupName { get; set; } = string.Empty;
         private string userId { get; set; }
 
+        // Pašreizējais Pomodoro sesijas ilgums minūtēs
         private int pomodoroMinutes = 25;
 
+        // Kopējais sesiju skaits no "Sesijas" dropzonas
         private int TotalSessions => Items
             .Where(task => task.Identifier == "Sesijas")
             .Sum(task => task.SessionsRequired);
 
+        // Pārbauda, vai var startēt Pomodoro (ir vismaz viena sesija)
         private bool CanStartPomodoro => TotalSessions > 0;
 
-        
+        /// <summary>
+        /// Inicializē ToDo komponenti, kas seko līdzi Pomodoro ilguma izmaiņām.
+        /// </summary>
         protected override async Task OnInitializedAsync()
         {
             pomodoroMinutes = PomodoroState.Minutes;
@@ -58,6 +65,9 @@ namespace Pilens.Components.Pages.todo
             await RecalculateSessionsAsync();
         }
 
+        /// <summary>
+        /// Ielādē lietotāja uzdevumus no datubāzes un atjauno lokālo sarakstu.
+        /// </summary>
         private async Task LoadTasksAsync()
         {
             try
@@ -79,6 +89,11 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
         }
+
+        /// <summary>
+        /// Aprēķina uzdevuma progresa procentus, balstoties uz mērķa vienībām.
+        /// </summary>
+        /// <param name="task">Uzdevums, kura progress jānovērtē</param>
         private double GetProgressPercent(ToDoTask task)
         {
             if (task == null)
@@ -92,16 +107,25 @@ namespace Pilens.Components.Pages.todo
                 return 0;
             }
 
+            // Aprēķina procentuālo daļu un ierobežo robežās 0-100
             return Math.Clamp((double)task.ProgressCurrentUnits / task.ProgressTargetUnits * 100.0, 0, 100);
         }
 
+        /// <summary>
+        /// Sinhronizē Pomodoro minūtes no stāvokļa un pārrēķina sesiju skaitu.
+        /// </summary>
         private void OnPomodoroMinutesChanged()
         {
             pomodoroMinutes = PomodoroState.Minutes;
+            // '_' tiek izmantots kā discard, lai ignorētu atgriezto Task
             _ = InvokeAsync(RecalculateSessionsAsync);
             InvokeAsync(StateHasChanged);
         }
 
+        /// <summary>
+        /// Apstrādā uzdevuma pārvietošanu starp dropzonām un atjaunina datubāzē.
+        /// </summary>
+        /// <param name="dropItem">Pārvietotais uzdevums un jaunās zonas identifikators</param>
         private async Task ItemUpdated(MudItemDropInfo<ToDoTask> dropItem)
         {
             try
@@ -118,9 +142,11 @@ namespace Pilens.Components.Pages.todo
                     return;
                 }
 
+                // Uzstāda jauno dropzonas identifikatoru
                 entity.Identifier = dropItem.DropzoneIdentifier;
 
                 var minutes = (int)Math.Ceiling(entity.EffortDuration.TotalMinutes);
+                // Ja uzdevums tiek pārvietots uz "Sesijas" zonu, aprēķina nepieciešamās sesijas
                 if (dropItem.DropzoneIdentifier == "Sesijas")
                 {
                     var pomodoroLength = pomodoroMinutes > 0 ? pomodoroMinutes : 25;
@@ -130,6 +156,7 @@ namespace Pilens.Components.Pages.todo
                 }
                 else
                 {
+                    // Citās zonās nesijas nav nepieciešamas
                     entity.SessionsRequired = 0;
                 }
 
@@ -143,6 +170,10 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
         }
+
+        /// <summary>
+        /// Sāk Pomodoro taimeri no Uzdevumu moduļa, pārbaudot vai sesiju skaits ir pozitīvs.
+        /// </summary>
         private async Task StartPomodoroFromDropzoneAsync()
         {
             if (!CanStartPomodoro)
@@ -153,11 +184,17 @@ namespace Pilens.Components.Pages.todo
 
             ErrorMessage = null;
 
+            // Izsauc callback funkciju, lai sāktu Pomodoro taimeri
             if (OnStartPomodoro.HasDelegate)
             {
                 await OnStartPomodoro.InvokeAsync(TotalSessions);
             }
         }
+
+        /// <summary>
+        /// Pārslēdz uzdevuma pabeigtības statusu un saglabā izmaiņas.
+        /// </summary>
+        /// <param name="task">Uzdevums, kura statuss jāpārslēdz</param>
         private async Task ToggleCompletion(ToDoTask task)
         {
             try
@@ -170,6 +207,7 @@ namespace Pilens.Components.Pages.todo
                     SnackbarService.Add(errorMessage, Severity.Error);
                 }
 
+                // Pārslēdz IsCompleted vērtību uz pretējo
                 entity.IsCompleted = !entity.IsCompleted;
                 await db.SaveChangesAsync();
                 StateHasChanged();
@@ -182,22 +220,38 @@ namespace Pilens.Components.Pages.todo
             }
         }
 
-          
+        /// <summary>
+        /// Atver uzdevuma rediģēšanas lapu.
+        /// </summary>
+        /// <param name="task">Rediģējamais uzdevums</param>
         private void StartEdit(ToDoTask task)
         {
             Navigation.NavigateTo($"/ToDo/update/{task.Id}");
         }
 
+        /// <summary>
+        /// Pārbauda, vai uzdevumam var palielināt progresu.
+        /// </summary>
+        /// <param name="task">Uzdevums, kuru validē</param>
         private bool CanIncreaseProgress(ToDoTask task)
         {
             return task?.ProgressTargetUnits > 0 && task.ProgressCurrentUnits < task.ProgressTargetUnits;
         }
 
+        /// <summary>
+        /// Pārbauda, vai uzdevumam var samazināt progresu.
+        /// </summary>
+        /// <param name="task">Uzdevums, kuru validē</param>
         private bool CanDecreaseProgress(ToDoTask task)
         {
             return task?.ProgressTargetUnits > 0 && task.ProgressCurrentUnits > 0;
         }
 
+        /// <summary>
+        /// Maina uzdevuma progresu par norādīto vienību skaitu un saglabā datubāzē.
+        /// </summary>
+        /// <param name="task">Uzdevums, kura progress jāatjaunina</param>
+        /// <param name="changeAmount">Vienību skaits, ko pieskaitīt vai atņemt</param>
         private async Task ChangeProgressAsync(ToDoTask task, int changeAmount)
         {
             
@@ -214,9 +268,11 @@ namespace Pilens.Components.Pages.todo
                     return;
                 }
 
+                // Atjaunina progresa vērtību
                 entity.ProgressCurrentUnits = newValue;
                 await db.SaveChangesAsync();
 
+                // Atjaunina arī lokālo objektu, lai UI atspoguļotu izmaiņas
                 task.ProgressCurrentUnits = newValue;
                 StateHasChanged();
             }
@@ -226,6 +282,7 @@ namespace Pilens.Components.Pages.todo
                 SnackbarService.Add(errorMessage, Severity.Error);
             }
         }
+
         /// <summary>
         /// UMF_003 – Izdzēst uzdevumu
         /// Ļauj reģistrētam lietotājam dzēst uzdevumu ar apstiprinājuma dialogu.
@@ -233,6 +290,7 @@ namespace Pilens.Components.Pages.todo
         /// <param name="task">Dzēšamais uzdevums</param>
         private async Task RemoveTask(ToDoTask task)
         {
+            // Konfigurē apstiprinājuma dialoga parametrus
             var parameters = new DialogParameters<ConfirmDeleteDialog>
             {
                 { x => x.ContentText, $"Vai esi pārliecināts, ka vēlies dzēst \"{task.Title}\"?" },
@@ -251,6 +309,7 @@ namespace Pilens.Components.Pages.todo
             var dialogRef = await DialogService.ShowAsync<ConfirmDeleteDialog>("Dzēst uzdevumu", parameters, options);
             var dialogResult = await dialogRef.Result;
 
+            // Ja lietotājs atcēla dialogu, neko nedara
             if (dialogResult.Canceled)
             {
                 return;
@@ -267,6 +326,7 @@ namespace Pilens.Components.Pages.todo
                     return;
                 }
 
+                // Dzēš visas saistītās grupas
                 var connections = await db.ToDoTaskGroups
                     .Where(connection => connection.ToDoTaskId == entity.Id)
                     .ToListAsync();
@@ -287,6 +347,10 @@ namespace Pilens.Components.Pages.todo
                 return;
             }
         }
+
+        /// <summary>
+        /// Izveido jaunu grupu pēc ievadītā nosaukuma un validē unikālumu.
+        /// </summary>
         private async Task CreateGroupAsync()
         {
             var trimmedName = NewGroupName?.Trim();
@@ -300,6 +364,7 @@ namespace Pilens.Components.Pages.todo
             try
             {
                 await using var db = await DbContextFactory.CreateDbContextAsync();
+                // Pārbauda, vai grupa ar šādu nosaukumu jau eksistē
                 var exists = await db.Groups.AnyAsync(group => group.Name == trimmedName);
                 if (exists)
                 {
@@ -310,6 +375,7 @@ namespace Pilens.Components.Pages.todo
                 db.Groups.Add(new Group { Name = trimmedName });
                 await db.SaveChangesAsync();
 
+                // Notīra ievades lauku pēc veiksmīgas izveides
                 NewGroupName = string.Empty;
                 ErrorMessage = null;
             }
@@ -318,7 +384,10 @@ namespace Pilens.Components.Pages.todo
                 ErrorMessage = "Grupu nevarēja izveidot!";
             }
         }
-        // TODO: kļūdas apstrāde
+
+        /// <summary>
+        /// Nolasa lietotāja Id no autentikācijas konteksta.
+        /// </summary>
         async Task<string> getUserId()
         {
             try
@@ -334,16 +403,26 @@ namespace Pilens.Components.Pages.todo
                 return string.Empty;
             }
         }
+
+        /// <summary>
+        /// Navigē uz jauna uzdevuma izveides lapu.
+        /// </summary>
         private void NavigateToCreate()
         {
             Navigation.NavigateTo($"ToDo/create");
         }
 
+        /// <summary>
+        /// Atvieno notikumu apstrādātāju, atbrīvojot resursus.
+        /// </summary>
         public void Dispose()
         {
             PomodoroState.OnChange -= OnPomodoroMinutesChanged;
         }
 
+        /// <summary>
+        /// Pārrēķina nepieciešamo sesiju skaitu, balstoties uz aktuālo Pomodoro ilgumu.
+        /// </summary>
         private async Task RecalculateSessionsAsync()
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -356,6 +435,7 @@ namespace Pilens.Components.Pages.todo
             try
             {
                 await using var db = await DbContextFactory.CreateDbContextAsync();
+                // Iegūst tikai uzdevumus, kas atrodas "Sesijas" zonā
                 var sessionTasks = await db.ToDoTasks
                     .Where(t => t.UserID == userId && t.Identifier == "Sesijas")
                     .ToListAsync();
@@ -364,6 +444,7 @@ namespace Pilens.Components.Pages.todo
                 foreach (var task in sessionTasks)
                 {
                     var minutes = (int)Math.Ceiling(task.EffortDuration.TotalMinutes);
+                    // Aprēķina jaunās sesijas, balstoties uz jaunajām Pomodoro minūtēm
                     var newSessions = minutes > 0
                         ? (int)Math.Ceiling(minutes / (double)pomodoroLength)
                         : 0;
@@ -381,6 +462,7 @@ namespace Pilens.Components.Pages.todo
                 }
 
                 
+                // Atjaunina arī lokālo Items sarakstu
                 if (Items.Count > 0)
                 {
                     foreach (var task in Items.Where(t => t.Identifier == "Sesijas"))

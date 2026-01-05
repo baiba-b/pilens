@@ -12,15 +12,17 @@
             <MudContainer>
                 <MudText Typo="Typo.h5" Align="Align.Center">Pomodoro</MudText>
 
+                @* Ievades forma pirms sesijas sākšanas *@
                 @if (!StartBtnPressed)
                 {
-                    @* <MudText Color="Color.Error">@ErrorMessage</MudText> *@
                     <MudForm @bind-IsValid="@success" @ref="pomodoroForm">
+                        @* Ievade: produktīvās sesijas ilgums *@
                         <MudNumericField @bind-value="pomodoroData.Minutes" Label="Sesijas ilgums"
                                          Variant="Variant.Outlined" Margin="Margin.Dense"
                                          Validation="@(new Func<int, string>(PomodoroValidation))" Required="true"
                                          RequiredError="@PomodoroReqError"
                                          OnlyValidateIfDirty="true" />
+                        @* Ievade: īsās un garās pauze laiks + cik sesiju vēlās*@
                         <MudStack Row="true" Spacing="2">
                             <MudNumericField @bind-value="pomodoroData.PauseMinutes" Label="Īsā pauze"
                                              Variant="Variant.Outlined" Margin="Margin.Dense"
@@ -38,6 +40,7 @@
                                              RequiredError="@PomodoroReqError"
                                              OnlyValidateIfDirty="true" />
                         </MudStack>
+                        @* Ievade: garās pauze sesija *@
                         <MudNumericField @bind-value="pomodoroData.SessionLongPause" Label="Garās pauzes intervāls"
                                          Variant="Variant.Outlined" Margin="Margin.Dense"
                                          Validation="@(new Func<int, string>(PomodoroValidation))" Required="true"
@@ -50,6 +53,7 @@
                 }
                 else
                 {
+                    @* Skats, kad taimeris jau darbojas *@
                     <MudStack Spacing="1">
                         @if (IsShortPause)
                         {
@@ -65,6 +69,7 @@
                     </MudStack>
                 }
 
+                @* Pogas taimerim un pauzēm *@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-3">
                     @if (!StartBtnPressed)
                     {
@@ -88,6 +93,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.PlayCircleFilled" Color="Color.Success" @onclick="ContinueTimer"></MudIconButton>
                         }
 
+                        @* Manuāla laika korekcija *@
                         <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" @onclick="() => AdjustTime(false)"></MudIconButton>
                         <MudNumericField @bind-value="pomodoroData.AdjustedMin" Width="25%" Label="Mainīt minūtes" Margin="Margin.Dense" Variant="Variant.Outlined"></MudNumericField>
                         <MudIconButton Icon="@Icons.Material.Filled.AddCircle" @onclick="() => AdjustTime(true)"></MudIconButton>
